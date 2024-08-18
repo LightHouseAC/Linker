@@ -1,0 +1,2 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+  com.aus.framework.biz.operationlog.config.ApiOperationLogAutoConfiguration
