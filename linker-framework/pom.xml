@@ -22,6 +22,7 @@
 
         <module>linker-common</module>
         <module>aus-spring-boot-starter-biz-operationlog</module>
+        <module>aus-spring-boot-starter-jackson</module>
     </modules>
 
 </project>

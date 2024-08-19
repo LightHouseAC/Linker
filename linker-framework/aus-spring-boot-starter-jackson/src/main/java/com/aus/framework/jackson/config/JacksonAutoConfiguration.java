@@ -1,5 +1,6 @@
-package com.aus.linker.auth.config;
+package com.aus.framework.jackson.config;
 
+import com.aus.framework.common.constant.DateConstants;
 import com.aus.framework.common.utils.JsonUtil;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -24,16 +25,16 @@ import java.time.format.DateTimeFormatter;
 import java.util.TimeZone;
 
 @Configuration
-public class JacksonConfig {
+public class JacksonAutoConfiguration {
 
     @Bean
     public ObjectMapper objectMapper() {
+        // 初始化一个 ObjectMapper 对象，用于自定义 Jackson 的行为
         ObjectMapper objectMapper = new ObjectMapper();
 
         // 忽略未知属性
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         objectMapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
-
         // 设置凡是为 null 的字段，返参中均不返回，请根据项目组约定是否开启
         // objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
 
@@ -44,19 +45,18 @@ public class JacksonConfig {
         JavaTimeModule javaTimeModule = new JavaTimeModule();
 
         // 支持 LocalDateTime、LocalDate、LocalTime
-        javaTimeModule.addSerializer(LocalDateTime.class, new LocalDateTimeSerializer(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-        javaTimeModule.addDeserializer(LocalDateTime.class, new LocalDateTimeDeserializer(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-        javaTimeModule.addSerializer(LocalDate.class, new LocalDateSerializer(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
-        javaTimeModule.addDeserializer(LocalDate.class, new LocalDateDeserializer(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
-        javaTimeModule.addSerializer(LocalTime.class, new LocalTimeSerializer(DateTimeFormatter.ofPattern("HH:mm:ss")));
-        javaTimeModule.addDeserializer(LocalTime.class, new LocalTimeDeserializer(DateTimeFormatter.ofPattern("HH:mm:ss")));
+        javaTimeModule.addSerializer(LocalDateTime.class, new LocalDateTimeSerializer(DateTimeFormatter.ofPattern(DateConstants.DATE_FORMAT_Y_M_D_H_M_S)));
+        javaTimeModule.addDeserializer(LocalDateTime.class, new LocalDateTimeDeserializer(DateTimeFormatter.ofPattern(DateConstants.DATE_FORMAT_Y_M_D_H_M_S)));
+        javaTimeModule.addSerializer(LocalDate.class, new LocalDateSerializer(DateTimeFormatter.ofPattern(DateConstants.DATE_FORMAT_Y_M_D)));
+        javaTimeModule.addDeserializer(LocalDate.class, new LocalDateDeserializer(DateTimeFormatter.ofPattern(DateConstants.DATE_FORMAT_Y_M_D)));
+        javaTimeModule.addSerializer(LocalTime.class, new LocalTimeSerializer(DateTimeFormatter.ofPattern(DateConstants.DATE_FORMAT_H_M_S)));
+        javaTimeModule.addDeserializer(LocalTime.class, new LocalTimeDeserializer(DateTimeFormatter.ofPattern(DateConstants.DATE_FORMAT_H_M_S)));
         // 支持 YearMonth
-        javaTimeModule.addSerializer(YearMonth.class, new YearMonthSerializer(DateTimeFormatter.ofPattern("yyyy-MM")));
-        javaTimeModule.addDeserializer(YearMonth.class, new YearMonthDeserializer(DateTimeFormatter.ofPattern("yyyy-MM")));
-
+        javaTimeModule.addSerializer(YearMonth.class, new YearMonthSerializer(DateTimeFormatter.ofPattern(DateConstants.DATE_FORMAT_Y_M)));
+        javaTimeModule.addDeserializer(YearMonth.class, new YearMonthDeserializer(DateTimeFormatter.ofPattern(DateConstants.DATE_FORMAT_Y_M)));
         objectMapper.registerModule(javaTimeModule);
 
-        // 初始化工具类中的ObjectMapper
+        // 初始化 JsonUtils 中的 ObjectMapper
         JsonUtil.init(objectMapper);
 
         return objectMapper;

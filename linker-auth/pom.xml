@@ -13,9 +13,9 @@
     <!-- 指定打包方式 -->
     <packaging>jar</packaging>
 
-    <artifactId>xiaohashu-auth</artifactId>
+    <artifactId>linker-auth</artifactId>
     <name>${project.artifactId}</name>
-    <description>小哈书：认证服务（负责处理用户登录、注册、账号注销等）</description>
+    <description>Linker认证服务（负责处理用户登录、注册、账号注销等）</description>
 
     <dependencies>
 
@@ -39,6 +39,12 @@
         <dependency>
             <groupId>com.aus</groupId>
             <artifactId>aus-spring-boot-starter-biz-operationlog</artifactId>
+        </dependency>
+
+        <!-- Jackson组件 -->
+        <dependency>
+            <groupId>com.aus</groupId>
+            <artifactId>aus-spring-boot-starter-jackson</artifactId>
         </dependency>
 
         <dependency>

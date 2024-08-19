@@ -107,6 +107,13 @@
         <version>${revision}</version>
       </dependency>
 
+      <!-- Jackson配置支持Java8新日期API组件 -->
+      <dependency>
+        <groupId>com.aus</groupId>
+        <artifactId>aus-spring-boot-starter-jackson</artifactId>
+        <version>${revision}</version>
+      </dependency>
+
       <dependency>
         <groupId>com.baomidou</groupId>
         <artifactId>mybatis-plus-boot-starter</artifactId>

@@ -39,3 +39,6 @@ build/
 
 ### Privacy Info ###
 DruidTest.java
+
+### logs ###
+/logs
