@@ -1,5 +1,6 @@
 package com.aus.framework.common.response;
 
+import com.aus.framework.common.exception.BizException;
 import lombok.Data;
 
 import java.io.Serial;
@@ -49,6 +50,14 @@ public class Response<T> implements Serializable {
         response.setSuccess(false);
         response.setMessage(errorMessage);
         response.setErrorCode(errorCode);
+        return response;
+    }
+
+    public static <T> Response<T> fail(BizException e){
+        Response<T> response = new Response<>();
+        response.setSuccess(false);
+        response.setMessage(e.getMessage());
+        response.setErrorCode(e.getErrorCode());
         return response;
     }
 

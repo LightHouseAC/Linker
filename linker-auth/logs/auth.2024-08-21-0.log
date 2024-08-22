@@ -1,0 +1,55 @@
+2024-08-21 15:10:02.772 [main] INFO  com.aus.linker.auth.RedisTest - Starting RedisTest using Java 17.0.11 on AuS with PID 3164 (started by recww in E:\Code\Linker\linker-auth)
+2024-08-21 15:10:02.773 [main] INFO  com.aus.linker.auth.RedisTest - The following 1 profile is active: "dev"
+2024-08-21 15:10:03.308 [main] INFO  o.s.d.r.config.RepositoryConfigurationDelegate - Multiple Spring Data modules found, entering strict repository configuration mode
+2024-08-21 15:10:03.311 [main] INFO  o.s.d.r.config.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2024-08-21 15:10:03.333 [main] INFO  o.s.d.r.config.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 7 ms. Found 0 Redis repository interfaces.
+2024-08-21 15:10:03.825 [main] INFO  c.a.d.s.b.a.DruidDataSourceAutoConfigure - Init DruidDataSource
+2024-08-21 15:10:04.633 [main] INFO  com.alibaba.druid.pool.DruidDataSource - {dataSource-1} inited
+2024-08-21 15:10:06.806 [main] INFO  com.aus.linker.auth.RedisTest - Started RedisTest in 4.335 seconds (JVM running for 5.199)
+2024-08-21 15:10:09.015 [SpringApplicationShutdownHook] INFO  com.alibaba.druid.pool.DruidDataSource - {dataSource-1} closing ...
+2024-08-21 15:10:09.021 [SpringApplicationShutdownHook] INFO  com.alibaba.druid.pool.DruidDataSource - {dataSource-1} closed
+2024-08-21 15:10:26.446 [main] INFO  com.aus.linker.auth.RedisTest - Starting RedisTest using Java 17.0.11 on AuS with PID 11632 (started by recww in E:\Code\Linker\linker-auth)
+2024-08-21 15:10:26.446 [main] INFO  com.aus.linker.auth.RedisTest - The following 1 profile is active: "dev"
+2024-08-21 15:10:26.964 [main] INFO  o.s.d.r.config.RepositoryConfigurationDelegate - Multiple Spring Data modules found, entering strict repository configuration mode
+2024-08-21 15:10:26.966 [main] INFO  o.s.d.r.config.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2024-08-21 15:10:26.992 [main] INFO  o.s.d.r.config.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 6 ms. Found 0 Redis repository interfaces.
+2024-08-21 15:10:27.457 [main] INFO  c.a.d.s.b.a.DruidDataSourceAutoConfigure - Init DruidDataSource
+2024-08-21 15:10:28.228 [main] INFO  com.alibaba.druid.pool.DruidDataSource - {dataSource-1} inited
+2024-08-21 15:10:30.667 [main] INFO  com.aus.linker.auth.RedisTest - Started RedisTest in 4.501 seconds (JVM running for 5.301)
+2024-08-21 15:10:31.500 [SpringApplicationShutdownHook] INFO  com.alibaba.druid.pool.DruidDataSource - {dataSource-1} closing ...
+2024-08-21 15:10:31.506 [SpringApplicationShutdownHook] INFO  com.alibaba.druid.pool.DruidDataSource - {dataSource-1} closed
+2024-08-21 15:16:09.804 [main] INFO  com.aus.linker.auth.RedisTest - Starting RedisTest using Java 17.0.11 on AuS with PID 25376 (started by recww in E:\Code\Linker\linker-auth)
+2024-08-21 15:16:09.805 [main] INFO  com.aus.linker.auth.RedisTest - The following 1 profile is active: "dev"
+2024-08-21 15:16:10.328 [main] INFO  o.s.d.r.config.RepositoryConfigurationDelegate - Multiple Spring Data modules found, entering strict repository configuration mode
+2024-08-21 15:16:10.331 [main] INFO  o.s.d.r.config.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2024-08-21 15:16:10.353 [main] INFO  o.s.d.r.config.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 7 ms. Found 0 Redis repository interfaces.
+2024-08-21 15:16:10.832 [main] INFO  c.a.d.s.b.a.DruidDataSourceAutoConfigure - Init DruidDataSource
+2024-08-21 15:16:11.677 [main] INFO  com.alibaba.druid.pool.DruidDataSource - {dataSource-1} inited
+2024-08-21 15:16:14.240 [main] INFO  com.aus.linker.auth.RedisTest - Started RedisTest in 4.739 seconds (JVM running for 5.539)
+2024-08-21 15:16:14.951 [main] INFO  com.aus.linker.auth.RedisTest - value 值:test_value
+2024-08-21 15:16:14.978 [main] INFO  com.aus.linker.auth.RedisTest - key 是否存在: false
+2024-08-21 15:16:15.117 [SpringApplicationShutdownHook] INFO  com.alibaba.druid.pool.DruidDataSource - {dataSource-1} closing ...
+2024-08-21 15:16:15.126 [SpringApplicationShutdownHook] INFO  com.alibaba.druid.pool.DruidDataSource - {dataSource-1} closed
+2024-08-21 15:17:40.766 [main] INFO  com.aus.linker.auth.RedisTest - Starting RedisTest using Java 17.0.11 on AuS with PID 17600 (started by recww in E:\Code\Linker\linker-auth)
+2024-08-21 15:17:40.767 [main] INFO  com.aus.linker.auth.RedisTest - The following 1 profile is active: "dev"
+2024-08-21 15:17:41.296 [main] INFO  o.s.d.r.config.RepositoryConfigurationDelegate - Multiple Spring Data modules found, entering strict repository configuration mode
+2024-08-21 15:17:41.298 [main] INFO  o.s.d.r.config.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2024-08-21 15:17:41.317 [main] INFO  o.s.d.r.config.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 7 ms. Found 0 Redis repository interfaces.
+2024-08-21 15:17:41.781 [main] INFO  c.a.d.s.b.a.DruidDataSourceAutoConfigure - Init DruidDataSource
+2024-08-21 15:17:42.668 [main] INFO  com.alibaba.druid.pool.DruidDataSource - {dataSource-1} inited
+2024-08-21 15:17:45.292 [main] INFO  com.aus.linker.auth.RedisTest - Started RedisTest in 4.835 seconds (JVM running for 5.607)
+2024-08-21 15:17:45.995 [main] INFO  com.aus.linker.auth.RedisTest - value 值:test_value
+2024-08-21 15:17:46.027 [main] INFO  com.aus.linker.auth.RedisTest - key 是否存在: false
+2024-08-21 15:17:46.160 [SpringApplicationShutdownHook] INFO  com.alibaba.druid.pool.DruidDataSource - {dataSource-1} closing ...
+2024-08-21 15:17:46.169 [SpringApplicationShutdownHook] INFO  com.alibaba.druid.pool.DruidDataSource - {dataSource-1} closed
+2024-08-21 16:01:40.245 [main] INFO  com.aus.linker.auth.ThreadPoolExecutorTests - Starting ThreadPoolExecutorTests using Java 17.0.11 on AuS with PID 4876 (started by recww in E:\Code\Linker\linker-auth)
+2024-08-21 16:01:40.246 [main] INFO  com.aus.linker.auth.ThreadPoolExecutorTests - The following 1 profile is active: "dev"
+2024-08-21 16:01:40.830 [main] INFO  o.s.d.r.config.RepositoryConfigurationDelegate - Multiple Spring Data modules found, entering strict repository configuration mode
+2024-08-21 16:01:40.834 [main] INFO  o.s.d.r.config.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2024-08-21 16:01:40.857 [main] INFO  o.s.d.r.config.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 8 ms. Found 0 Redis repository interfaces.
+2024-08-21 16:01:41.369 [main] INFO  c.a.d.s.b.a.DruidDataSourceAutoConfigure - Init DruidDataSource
+2024-08-21 16:01:42.196 [main] INFO  com.alibaba.druid.pool.DruidDataSource - {dataSource-1} inited
+2024-08-21 16:01:44.363 [main] INFO  com.aus.linker.auth.ThreadPoolExecutorTests - Started ThreadPoolExecutorTests in 4.416 seconds (JVM running for 5.237)
+2024-08-21 16:01:44.645 [AuthExecutor-1] INFO  com.aus.linker.auth.ThreadPoolExecutorTests - 异步线程调用测试：ok
+2024-08-21 16:01:44.675 [SpringApplicationShutdownHook] INFO  com.alibaba.druid.pool.DruidDataSource - {dataSource-1} closing ...
+2024-08-21 16:01:44.681 [SpringApplicationShutdownHook] INFO  com.alibaba.druid.pool.DruidDataSource - {dataSource-1} closed

@@ -6,26 +6,33 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.Date;
+
+import lombok.Builder;
 import lombok.Data;
 
 /**
- * 用户测试表
- * @TableName t_user
+ * 用户角色表
+ * @TableName t_user_role_rel
  */
-@TableName(value ="t_user")
+@TableName(value ="t_user_role_rel")
 @Data
-public class User implements Serializable {
+@Builder
+public class UserRoleDO implements Serializable {
     /**
-     * 主键id
+     * 主键ID
      */
     @TableId(type = IdType.AUTO)
     private Long id;
 
     /**
-     * 用户名
+     * 用户ID
      */
-    private String username;
+    private Long userId;
+
+    /**
+     * 角色ID
+     */
+    private Long roleId;
 
     /**
      * 创建时间
@@ -36,6 +43,11 @@ public class User implements Serializable {
      * 更新时间
      */
     private LocalDateTime updateTime;
+
+    /**
+     * 逻辑删除(0：未删除 1：已删除)
+     */
+    private Boolean isDeleted;
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
@@ -51,11 +63,13 @@ public class User implements Serializable {
         if (getClass() != that.getClass()) {
             return false;
         }
-        User other = (User) that;
+        UserRoleDO other = (UserRoleDO) that;
         return (this.getId() == null ? other.getId() == null : this.getId().equals(other.getId()))
-            && (this.getUsername() == null ? other.getUsername() == null : this.getUsername().equals(other.getUsername()))
+            && (this.getUserId() == null ? other.getUserId() == null : this.getUserId().equals(other.getUserId()))
+            && (this.getRoleId() == null ? other.getRoleId() == null : this.getRoleId().equals(other.getRoleId()))
             && (this.getCreateTime() == null ? other.getCreateTime() == null : this.getCreateTime().equals(other.getCreateTime()))
-            && (this.getUpdateTime() == null ? other.getUpdateTime() == null : this.getUpdateTime().equals(other.getUpdateTime()));
+            && (this.getUpdateTime() == null ? other.getUpdateTime() == null : this.getUpdateTime().equals(other.getUpdateTime()))
+            && (this.getIsDeleted() == null ? other.getIsDeleted() == null : this.getIsDeleted().equals(other.getIsDeleted()));
     }
 
     @Override
@@ -63,9 +77,11 @@ public class User implements Serializable {
         final int prime = 31;
         int result = 1;
         result = prime * result + ((getId() == null) ? 0 : getId().hashCode());
-        result = prime * result + ((getUsername() == null) ? 0 : getUsername().hashCode());
+        result = prime * result + ((getUserId() == null) ? 0 : getUserId().hashCode());
+        result = prime * result + ((getRoleId() == null) ? 0 : getRoleId().hashCode());
         result = prime * result + ((getCreateTime() == null) ? 0 : getCreateTime().hashCode());
         result = prime * result + ((getUpdateTime() == null) ? 0 : getUpdateTime().hashCode());
+        result = prime * result + ((getIsDeleted() == null) ? 0 : getIsDeleted().hashCode());
         return result;
     }
 
@@ -76,9 +92,11 @@ public class User implements Serializable {
         sb.append(" [");
         sb.append("Hash = ").append(hashCode());
         sb.append(", id=").append(id);
-        sb.append(", username=").append(username);
+        sb.append(", userId=").append(userId);
+        sb.append(", roleId=").append(roleId);
         sb.append(", createTime=").append(createTime);
         sb.append(", updateTime=").append(updateTime);
+        sb.append(", isDeleted=").append(isDeleted);
         sb.append(", serialVersionUID=").append(serialVersionUID);
         sb.append("]");
         return sb.toString();

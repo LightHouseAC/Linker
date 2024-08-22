@@ -2,17 +2,19 @@
 <!DOCTYPE mapper
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.aus.linker.auth.domain.mapper.UserMapper">
+<mapper namespace="com.aus.linker.auth.domain.mapper.UserRoleDOMapper">
 
-    <resultMap id="BaseResultMap" type="com.aus.linker.auth.domain.dataobject.User">
+    <resultMap id="BaseResultMap" type="com.aus.linker.auth.domain.dataobject.UserRoleDO">
             <id property="id" column="id" jdbcType="BIGINT"/>
-            <result property="username" column="username" jdbcType="VARCHAR"/>
+            <result property="userId" column="user_id" jdbcType="BIGINT"/>
+            <result property="roleId" column="role_id" jdbcType="BIGINT"/>
             <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
             <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+            <result property="isDeleted" column="is_deleted" jdbcType="BIT"/>
     </resultMap>
 
     <sql id="Base_Column_List">
-        id,username,create_time,
-        update_time
+        id,user_id,role_id,
+        create_time,update_time,is_deleted
     </sql>
 </mapper>

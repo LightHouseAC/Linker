@@ -15,6 +15,7 @@
             <option name="ignoreFieldSuffix" value="" />
             <option name="ignoreTablePrefix" value="" />
             <option name="ignoreTableSuffix" value="" />
+            <option name="jsr310Support" value="true" />
             <option name="moduleName" value="linker-auth" />
             <option name="modulePath" value="$PROJECT_DIR$/linker-auth" />
             <option name="moduleUIInfoList">
@@ -64,12 +65,12 @@
             <option name="needToStringHashcodeEquals" value="true" />
             <option name="needsComment" value="true" />
             <option name="needsModel" value="true" />
-            <option name="relativePackage" value="" />
+            <option name="relativePackage" value="dataobject" />
             <option name="superClass" value="" />
             <option name="tableUIInfoList">
               <list>
                 <TableUIInfo>
-                  <option name="className" value="User" />
+                  <option name="className" value="UserDO" />
                   <option name="tableName" value="t_user" />
                 </TableUIInfo>
               </list>
