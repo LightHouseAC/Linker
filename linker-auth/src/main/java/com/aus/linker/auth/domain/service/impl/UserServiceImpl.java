@@ -7,8 +7,11 @@ import com.aus.framework.common.response.Response;
 import com.aus.framework.common.utils.JsonUtil;
 import com.aus.linker.auth.constant.RedisKeyConstants;
 import com.aus.linker.auth.constant.RoleConstants;
+import com.aus.linker.auth.domain.dataobject.UserDO;
 import com.aus.linker.auth.domain.dataobject.UserRoleDO;
+import com.aus.linker.auth.domain.mapper.UserDOMapper;
 import com.aus.linker.auth.domain.mapper.UserRoleDOMapper;
+import com.aus.linker.auth.domain.service.UserService;
 import com.aus.linker.auth.enums.DeletedEnum;
 import com.aus.linker.auth.enums.LoginTypeEnum;
 import com.aus.linker.auth.enums.ResponseCodeEnum;
@@ -16,15 +19,12 @@ import com.aus.linker.auth.enums.StatusEnum;
 import com.aus.linker.auth.model.vo.user.UserLoginReqVO;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.aus.linker.auth.domain.dataobject.UserDO;
-import com.aus.linker.auth.domain.service.UserService;
-import com.aus.linker.auth.domain.mapper.UserDOMapper;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
@@ -46,6 +46,12 @@ public class UserServiceImpl extends ServiceImpl<UserDOMapper, UserDO>
 
     @Resource
     private UserRoleDOMapper userRoleDOMapper;
+
+    /**
+     * 编程式事务模板
+     */
+    @Resource
+    private TransactionTemplate transactionTemplate;
 
     /**
      * 登录与注册
@@ -113,44 +119,52 @@ public class UserServiceImpl extends ServiceImpl<UserDOMapper, UserDO>
      * @param phone
      * @return
      */
-    @Transactional(rollbackFor = Exception.class)
+//    @Transactional(rollbackFor = Exception.class)
     public Long registerUser(String phone) {
-        // 获取全局自增的Linker ID
-        Long linkerId = redisTemplate.opsForValue().increment(RedisKeyConstants.LINKER_ID_GENERATOR_KEY);
+        return transactionTemplate.execute(status -> {
+            try {
+                // 获取全局自增的Linker ID
+                Long linkerId = redisTemplate.opsForValue().increment(RedisKeyConstants.LINKER_ID_GENERATOR_KEY);
 
-        UserDO userDO = UserDO.builder()
-                .phone(phone)
-                .linkerId(String.valueOf(linkerId)) // 自动生成Linker ID
-                .nickname("林克" + linkerId) // 自动生成昵称
-                .status(StatusEnum.Enabled.getValue()) // 状态为启用
-                .createTime(LocalDateTime.now())
-                .updateTime(LocalDateTime.now())
-                .isDeleted(DeletedEnum.NO.getValue()) // 逻辑删除
-                .build();
+                UserDO userDO = UserDO.builder()
+                        .phone(phone)
+                        .linkerId(String.valueOf(linkerId)) // 自动生成Linker ID
+                        .nickname("林克" + linkerId) // 自动生成昵称
+                        .status(StatusEnum.Enabled.getValue()) // 状态为启用
+                        .createTime(LocalDateTime.now())
+                        .updateTime(LocalDateTime.now())
+                        .isDeleted(DeletedEnum.NO.getValue()) // 逻辑删除
+                        .build();
 
-        // 保存进数据库
-        this.save(userDO);
+                // 保存进数据库
+                this.save(userDO);
 
-        // 获取用户id
-        Long userId = userDO.getId();
+                // 获取用户id
+                Long userId = userDO.getId();
 
-        // 为该用户分配一个默认角色
-        UserRoleDO userRoleDO = UserRoleDO.builder()
-                .userId(userId)
-                .roleId(RoleConstants.COMMON_USER_ROLE_ID)
-                .createTime(LocalDateTime.now())
-                .updateTime(LocalDateTime.now())
-                .isDeleted(DeletedEnum.NO.getValue())
-                .build();
-        userRoleDOMapper.insert(userRoleDO);
+                // 为该用户分配一个默认角色
+                UserRoleDO userRoleDO = UserRoleDO.builder()
+                        .userId(userId)
+                        .roleId(RoleConstants.COMMON_USER_ROLE_ID)
+                        .createTime(LocalDateTime.now())
+                        .updateTime(LocalDateTime.now())
+                        .isDeleted(DeletedEnum.NO.getValue())
+                        .build();
+                userRoleDOMapper.insert(userRoleDO);
 
-        // 将该用户的角色ID存入 Redis 中， 一个用户可能有多个角色，需要存List
-        List<Long> roles = Lists.newArrayList();
-        roles.add(RoleConstants.COMMON_USER_ROLE_ID);
-        String userRoleKey = RedisKeyConstants.buildUserRoleKey(phone);
-        redisTemplate.opsForValue().set(userRoleKey, JsonUtil.toJsonString(roles));
+                // 将该用户的角色ID存入 Redis 中， 一个用户可能有多个角色，需要存List
+                List<Long> roles = Lists.newArrayList();
+                roles.add(RoleConstants.COMMON_USER_ROLE_ID);
+                String userRoleKey = RedisKeyConstants.buildUserRoleKey(phone);
+                redisTemplate.opsForValue().set(userRoleKey, JsonUtil.toJsonString(roles));
 
-        return userId;
+                return userId;
+            } catch (Exception e) {
+                status.setRollbackOnly(); // 标记事务为回滚
+                log.error("==> 系统注册用户异常: ", e);
+                return null;
+            }
+        });
     }
 
 }
