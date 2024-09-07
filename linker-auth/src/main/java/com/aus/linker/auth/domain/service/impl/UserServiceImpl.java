@@ -2,13 +2,16 @@ package com.aus.linker.auth.domain.service.impl;
 
 import cn.dev33.satoken.stp.SaTokenInfo;
 import cn.dev33.satoken.stp.StpUtil;
+import com.aus.framework.biz.context.holder.LoginUserContextHolder;
 import com.aus.framework.common.exception.BizException;
 import com.aus.framework.common.response.Response;
 import com.aus.framework.common.utils.JsonUtil;
 import com.aus.linker.auth.constant.RedisKeyConstants;
 import com.aus.linker.auth.constant.RoleConstants;
+import com.aus.linker.auth.domain.dataobject.RoleDO;
 import com.aus.linker.auth.domain.dataobject.UserDO;
 import com.aus.linker.auth.domain.dataobject.UserRoleDO;
+import com.aus.linker.auth.domain.mapper.RoleDOMapper;
 import com.aus.linker.auth.domain.mapper.UserDOMapper;
 import com.aus.linker.auth.domain.mapper.UserRoleDOMapper;
 import com.aus.linker.auth.domain.service.UserService;
@@ -19,7 +22,7 @@ import com.aus.linker.auth.enums.StatusEnum;
 import com.aus.linker.auth.model.vo.user.UserLoginReqVO;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.google.common.collect.Lists;
+import com.google.common.base.Preconditions;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -28,6 +31,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -53,6 +57,9 @@ public class UserServiceImpl extends ServiceImpl<UserDOMapper, UserDO>
     @Resource
     private TransactionTemplate transactionTemplate;
 
+    @Resource
+    private RoleDOMapper roleDOMapper;
+
     /**
      * 登录与注册
      * @param userLoginReqVO
@@ -69,9 +76,11 @@ public class UserServiceImpl extends ServiceImpl<UserDOMapper, UserDO>
             case VERIFICATION_CODE: // 手机号+验证码登录
                 String verificationCode = userLoginReqVO.getCode();
                 // 检验入参验证码是否为空
-                if (StringUtils.isBlank(verificationCode)) {
-                    return Response.fail(ResponseCodeEnum.PARAM_NOT_VALID.getErrorCode(), "验证码不能为空");
-                }
+//                if (StringUtils.isBlank(verificationCode)) {
+//                    return Response.fail(ResponseCodeEnum.PARAM_NOT_VALID.getErrorCode(), "验证码不能为空");
+//                }
+                Preconditions.checkArgument(StringUtils.isNotBlank(verificationCode), "验证码不能为空");
+
                 // 构建验证码Redis key
                 String key = RedisKeyConstants.buildVerificationCodeKey(phone);
                 // 查询存储在Redis中的验证码
@@ -115,6 +124,22 @@ public class UserServiceImpl extends ServiceImpl<UserDOMapper, UserDO>
     }
 
     /**
+     * 退出登录
+     * @return
+     */
+    @Override
+    public Response<?> logout() {
+        Long userId = LoginUserContextHolder.getUserId();
+
+        log.info("==> 用户退出登录，userId: {}", userId);
+
+        // 退出登录（指定用户 ID）
+        StpUtil.logout(userId);
+
+        return Response.success();
+    }
+
+    /**
      * 系统自动注册用户
      * @param phone
      * @return
@@ -152,10 +177,15 @@ public class UserServiceImpl extends ServiceImpl<UserDOMapper, UserDO>
                         .build();
                 userRoleDOMapper.insert(userRoleDO);
 
-                // 将该用户的角色ID存入 Redis 中， 一个用户可能有多个角色，需要存List
-                List<Long> roles = Lists.newArrayList();
-                roles.add(RoleConstants.COMMON_USER_ROLE_ID);
-                String userRoleKey = RedisKeyConstants.buildUserRoleKey(phone);
+                QueryWrapper<RoleDO> wrapper = new QueryWrapper<>();
+                wrapper.eq("id", RoleConstants.COMMON_USER_ROLE_ID);
+                RoleDO roleDO = roleDOMapper.selectOne(wrapper);
+
+                // 将该用户的角色 ID 存入 Redis 中，指定初始容量为 1， 可以减少扩容时的性能开销
+                List<String> roles = new ArrayList<>(1);
+                roles.add(roleDO.getRoleKey());
+
+                String userRoleKey = RedisKeyConstants.buildUserRoleKey(userId);
                 redisTemplate.opsForValue().set(userRoleKey, JsonUtil.toJsonString(roles));
 
                 return userId;

@@ -20,6 +20,8 @@
   <modules>
     <module>linker-auth</module>
     <module>linker-framework</module>
+    <module>linker-gateway</module>
+    <module>linker-framework/aus-spring-boot-starter-biz-context</module>
   </modules>
 
   <properties>
@@ -44,11 +46,13 @@
     <mysql-connector-j.version>8.0.33</mysql-connector-j.version>
     <druid.version>1.2.19</druid.version>
     <flatten-maven-plugin.version>1.5.0</flatten-maven-plugin.version>
-    <sa-token.version>1.38.0</sa-token.version>
+    <sa-token.version>1.39.0</sa-token.version>
     <guava.version>33.0.0-jre</guava.version>
     <hutool.version>5.8.25</hutool.version>
     <commons-lang3.version>3.12.0</commons-lang3.version>
     <dysmsapi.version>3.0.0</dysmsapi.version>
+    <nacos-config.version>0.2.12</nacos-config.version>
+    <transmittable-thread-local.version>2.14.2</transmittable-thread-local.version>
   </properties>
 
   <!-- 统一依赖管理 -->
@@ -113,6 +117,13 @@
         <version>${revision}</version>
       </dependency>
 
+      <!-- 业务上下文组件 -->
+      <dependency>
+        <groupId>com.aus</groupId>
+        <artifactId>aus-spring-boot-starter-biz-context</artifactId>
+        <version>${revision}</version>
+      </dependency>
+
       <!-- Jackson配置支持Java8新日期API组件 -->
       <dependency>
         <groupId>com.aus</groupId>
@@ -143,6 +154,13 @@
       <dependency>
         <groupId>cn.dev33</groupId>
         <artifactId>sa-token-spring-boot-starter</artifactId>
+        <version>${sa-token.version}</version>
+      </dependency>
+
+      <!-- 整合 Sa-Token -->
+      <dependency>
+        <groupId>cn.dev33</groupId>
+        <artifactId>sa-token-reactor-spring-boot-starter</artifactId>
         <version>${sa-token.version}</version>
       </dependency>
 
@@ -179,6 +197,20 @@
         <groupId>cn.dev33</groupId>
         <artifactId>sa-token-redis-jackson</artifactId>
         <version>${sa-token.version}</version>
+      </dependency>
+
+      <!-- Nacos 配置中心 -->
+      <dependency>
+        <groupId>com.alibaba.boot</groupId>
+        <artifactId>nacos-config-spring-boot-starter</artifactId>
+        <version>${nacos-config.version}</version>
+      </dependency>
+
+      <!-- 阿里 Transmittable ThreadLocal -->
+      <dependency>
+        <groupId>com.alibaba</groupId>
+        <artifactId>transmittable-thread-local</artifactId>
+        <version>${transmittable-thread-local.version}</version>
       </dependency>
 
     </dependencies>
