@@ -1,0 +1,9 @@
+storage:
+  minio:
+    endpoint: http://127.0.0.1:9000
+    accessKey: AhqQeTlGNpsb59zTBFvD
+    secretKey: andfsMRufRqI6OPRl31mXGcQH8ESLGOBz6awbu2e
+  aliyun-oss:
+    endpoint: oss-cn-shenzhen.aliyuncs.com
+    accessKey: LTAI5tGX3bJfafPdrrC7uwrU
+    secretKey: 4qvGDqwNelzyR3Ezk2yxavcahS3Amj

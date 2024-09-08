@@ -1,0 +1,12 @@
+spring:
+  application:
+    name: linker-user
+  profiles:
+    active: dev
+  cloud:
+    nacos:
+      discovery:
+        enabled: true
+        group: DEFAULT_GROUP
+        namespace: linker
+        server-addr: http://127.0.0.1:8848

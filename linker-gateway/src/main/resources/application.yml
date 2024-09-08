@@ -21,6 +21,12 @@ spring:
             - Path=/auth/**
           filters: # 定义路由过滤器，去掉路径中的第一个部分: /auth/verification/code/send => /verification/code/send
             - StripPrefix=1
+        - id: user
+          uri: lb://linker-user
+          predicates:
+            - Path=/user/**
+          filters:
+            - StripPrefix=1
 
 ############## Sa-Token 配置 (文档: https://sa-token.cc) ##############
 sa-token:

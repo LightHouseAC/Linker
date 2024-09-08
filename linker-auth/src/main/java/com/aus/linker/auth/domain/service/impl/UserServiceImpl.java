@@ -19,6 +19,7 @@ import com.aus.linker.auth.enums.DeletedEnum;
 import com.aus.linker.auth.enums.LoginTypeEnum;
 import com.aus.linker.auth.enums.ResponseCodeEnum;
 import com.aus.linker.auth.enums.StatusEnum;
+import com.aus.linker.auth.model.vo.user.UpdatePasswordReqVO;
 import com.aus.linker.auth.model.vo.user.UserLoginReqVO;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -26,6 +27,7 @@ import com.google.common.base.Preconditions;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -59,6 +61,9 @@ public class UserServiceImpl extends ServiceImpl<UserDOMapper, UserDO>
 
     @Resource
     private RoleDOMapper roleDOMapper;
+
+    @Resource
+    private PasswordEncoder passwordEncoder;
 
     /**
      * 登录与注册
@@ -107,6 +112,28 @@ public class UserServiceImpl extends ServiceImpl<UserDOMapper, UserDO>
                 }
                 break;
             case PASSWORD:
+                String password = userLoginReqVO.getPassword();
+                // 根据手机号查询
+                QueryWrapper<UserDO> queryWrapper1 = new QueryWrapper<>();
+                queryWrapper1.eq("phone", phone);
+                UserDO userDO1 = getOne(queryWrapper1);
+
+                // 判断该手机号是否注册
+                if (Objects.isNull(userDO1)) {
+                    throw new BizException(ResponseCodeEnum.USER_NOT_FOUND);
+                }
+
+                // 拿到密文密码
+                String encodePassword = userDO1.getPassword();
+
+                // 匹配密码是否一致
+                boolean isPasswordCorrect = passwordEncoder.matches(password, encodePassword);
+
+                if (!isPasswordCorrect) {
+                    throw new BizException(ResponseCodeEnum.PHONE_OR_PASSWORD_ERROR);
+                }
+
+                userId = userDO1.getId();
                 break;
             default:
                 break;
@@ -135,6 +162,28 @@ public class UserServiceImpl extends ServiceImpl<UserDOMapper, UserDO>
 
         // 退出登录（指定用户 ID）
         StpUtil.logout(userId);
+
+        return Response.success();
+    }
+
+    @Override
+    public Response<?> updatePassword(UpdatePasswordReqVO updatePasswordReqVO) {
+        // 新密码
+        String newPassword = updatePasswordReqVO.getNewPassword();
+        // 密码加密
+        String encodePassword = passwordEncoder.encode(newPassword);
+
+        // 获取当前请求对应的用户 ID
+        Long userId = LoginUserContextHolder.getUserId();
+
+        UserDO userDO = UserDO.builder()
+                .id(userId)
+                .password(encodePassword)
+                .updateTime(LocalDateTime.now())
+                .build();
+
+        // 更新密码
+        updateById(userDO);
 
         return Response.success();
     }

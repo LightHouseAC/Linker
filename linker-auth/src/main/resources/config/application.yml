@@ -45,6 +45,3 @@ sa-token:
 #    remote-first: true # 优先使用远程配置
 #    bootstrap:
 #      enable: true # 启动时预热配置
-
-alarm:
-  type: sms

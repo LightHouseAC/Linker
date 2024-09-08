@@ -2,6 +2,7 @@ package com.aus.linker.auth.domain.service;
 
 import com.aus.framework.common.response.Response;
 import com.aus.linker.auth.domain.dataobject.UserDO;
+import com.aus.linker.auth.model.vo.user.UpdatePasswordReqVO;
 import com.aus.linker.auth.model.vo.user.UserLoginReqVO;
 import com.baomidou.mybatisplus.extension.service.IService;
 
@@ -24,5 +25,12 @@ public interface UserService extends IService<UserDO> {
      * @return
      */
     Response<?> logout();
+
+    /**
+     * 修改密码
+     * @param updatePasswordReqVO
+     * @return
+     */
+    Response<?> updatePassword(UpdatePasswordReqVO updatePasswordReqVO);
 
 }
