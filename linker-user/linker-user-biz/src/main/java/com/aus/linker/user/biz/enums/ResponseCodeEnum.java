@@ -16,7 +16,9 @@ public enum ResponseCodeEnum implements BaseExceptionInterface {
     NICK_NAME_VALID_FAIL("USER-40001", "昵称请设置2-24个字符，不能使用@《/等特殊字符"),
     LINKER_ID_VALID_FAIL("USER-40002", "Linker 号请设置6-15个字符，仅可使用英文（必须）、数字、下划线"),
     SEX_VALID_FAIL("USER-40003", "性别错误"),
-    INTRODUCTION_VALID_FAIL("USER-40004", "个人简介请设置1-100个字符")
+    INTRODUCTION_VALID_FAIL("USER-40004", "个人简介请设置1-100个字符"),
+    UPLOAD_AVATAR_FAIL("USER-50001", "头像上传失败"),
+    UPLOAD_BACKGROUND_IMG_FAIL("USER-50002", "背景图上传失败")
     ;
 
     // 异常码

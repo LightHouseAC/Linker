@@ -62,6 +62,7 @@
     <jaxb-api.version>2.3.1</jaxb-api.version>
     <activation.version>1.1.1</activation.version>
     <jaxb-runtime.version>2.3.3</jaxb-runtime.version>
+    <feign-form.version>3.8.0</feign-form.version>
   </properties>
 
   <!-- 统一依赖管理 -->
@@ -257,6 +258,13 @@
         <groupId>com.aus.linker.oss</groupId>
         <artifactId>linker-oss-api</artifactId>
         <version>${revision}</version>
+      </dependency>
+
+      <!-- 支持 OpenFeign 表单提交 -->
+      <dependency>
+        <groupId>io.github.openfeign.form</groupId>
+        <artifactId>feign-form</artifactId>
+        <version>${feign-form.version}</version>
       </dependency>
 
     </dependencies>

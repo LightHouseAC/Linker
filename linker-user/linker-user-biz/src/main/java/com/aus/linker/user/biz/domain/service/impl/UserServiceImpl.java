@@ -1,6 +1,7 @@
 package com.aus.linker.user.biz.domain.service.impl;
 
 import com.aus.framework.biz.context.holder.LoginUserContextHolder;
+import com.aus.framework.common.exception.BizException;
 import com.aus.framework.common.response.Response;
 import com.aus.framework.common.utils.ParamUtils;
 import com.aus.linker.oss.api.FileFeignApi;
@@ -10,8 +11,10 @@ import com.aus.linker.user.biz.domain.service.UserService;
 import com.aus.linker.user.biz.enums.ResponseCodeEnum;
 import com.aus.linker.user.biz.enums.SexEnum;
 import com.aus.linker.user.biz.model.vo.UpdateUserInfoReqVO;
+import com.aus.linker.user.biz.rpc.OssRpcService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.base.Preconditions;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -27,11 +30,15 @@ import java.util.Objects;
 * @createDate 2024-09-07 21:58:57
 */
 @Service
+@Slf4j
 public class UserServiceImpl extends ServiceImpl<UserDOMapper, UserDO>
     implements UserService {
 
     @Resource
     private FileFeignApi fileFeignApi;
+
+    @Resource
+    private OssRpcService ossRpcService;
 
     @Override
     public Response<?> updateUserInfo(UpdateUserInfoReqVO updateUserInfoReqVO) {
@@ -45,8 +52,16 @@ public class UserServiceImpl extends ServiceImpl<UserDOMapper, UserDO>
         MultipartFile avatarFile = updateUserInfoReqVO.getAvatar();
 
         if (Objects.nonNull(avatarFile)) {
-            // todo：调用对象存储服务上传文件
-            fileFeignApi.test();
+            String avatar = ossRpcService.uploadFile(avatarFile);
+            log.info("==> 调用 oss 服务成功，上传头像，url: {}", avatar);
+
+            // 若上传头像失败，则抛出业务异常
+            if (StringUtils.isBlank(avatar)) {
+                throw new BizException(ResponseCodeEnum.UPLOAD_AVATAR_FAIL);
+            }
+
+            userDO.setAvatar(avatar);
+            needUpdate = true;
         }
 
         // 昵称
@@ -89,9 +104,18 @@ public class UserServiceImpl extends ServiceImpl<UserDOMapper, UserDO>
         }
 
         // 背景图
-        MultipartFile backgroundImg = updateUserInfoReqVO.getBackgroundImg();
-        if (Objects.nonNull(backgroundImg)) {
-            // todo: 调用对象存储服务上传文件
+        MultipartFile backgroundImgFile = updateUserInfoReqVO.getBackgroundImg();
+        if (Objects.nonNull(backgroundImgFile)) {
+            String backgroundImg = ossRpcService.uploadFile(backgroundImgFile);
+            log.info("==> 调用 oss 服务成功，上传背景图，url: {}", backgroundImg);
+
+            // 若上传背景图失败，则抛出业务异常
+            if (StringUtils.isBlank(backgroundImg)) {
+                throw new BizException(ResponseCodeEnum.UPLOAD_BACKGROUND_IMG_FAIL);
+            }
+
+            userDO.setBackgroundImg(backgroundImg);
+            needUpdate = true;
         }
 
         if (needUpdate) {
