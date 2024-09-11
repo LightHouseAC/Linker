@@ -1,0 +1,6 @@
+spring:
+  data:
+    cassandra:
+      keyspace-name: linker
+      contact-points: 127.0.0.1
+      port: 9042

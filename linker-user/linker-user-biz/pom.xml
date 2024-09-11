@@ -82,6 +82,24 @@
             <artifactId>linker-oss-api</artifactId>
         </dependency>
 
+        <!-- Redis -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
+
+        <!-- Redis 连接池 -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-pool2</artifactId>
+        </dependency>
+
+        <!-- 引入用户注册 RPC 层 -->
+        <dependency>
+            <groupId>com.aus.linker.user.api</groupId>
+            <artifactId>linker-user-api</artifactId>
+        </dependency>
+
     </dependencies>
 
     <build>

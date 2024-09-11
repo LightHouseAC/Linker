@@ -1,12 +1,11 @@
 package com.aus.linker.auth;
 
-import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.EnableAspectJAutoProxy;
+import org.springframework.cloud.openfeign.EnableFeignClients;
 
 @SpringBootApplication
-@MapperScan("com.aus.linker.auth.domain.mapper")
+@EnableFeignClients(basePackages = "com.aus.linker")
 public class LinkerAuthApplication {
 
     public static void main(String[] args) {

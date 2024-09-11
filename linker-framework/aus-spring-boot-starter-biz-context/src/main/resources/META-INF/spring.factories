@@ -1,2 +1,3 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-  com.aus.framework.biz.context.config.ContextAutoConfiguration
+  com.aus.framework.biz.context.config.ContextAutoConfiguration,\
+  com.aus.framework.biz.context.config.FeignContextAutoConfiguration

@@ -6,7 +6,7 @@
     <parent>
         <groupId>com.aus</groupId>
         <artifactId>linker-oss</artifactId>
-        <version>0.0.1-SNAPSHOT</version>
+        <version>${revision}</version>
     </parent>
 
     <groupId>com.aus.linker.oss</groupId>

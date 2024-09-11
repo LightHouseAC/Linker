@@ -15,9 +15,10 @@ public enum ResponseCodeEnum implements BaseExceptionInterface {
     // ------ 业务异常状态码 ------
     VERIFICATION_CODE_SEND_FREQUENTLY("AUTH-40300", "验证码请求过频繁，请3分钟后重试"),
     VERIFICATION_CODE_WRONG("AUTH-40100", "验证码错误"),
-    LOGIN_TYPE_ERROR("AUTH-40001", "登陆类型错误"),
+    LOGIN_TYPE_ERROR("AUTH-40001", "登录类型错误"),
     USER_NOT_FOUND("AUTH-40400", "该用户不存在"),
-    PHONE_OR_PASSWORD_ERROR("AUTH-40101", "手机号或密码错误")
+    PHONE_OR_PASSWORD_ERROR("AUTH-40101", "手机号或密码错误"),
+    LOGIN_FAIL("AUTH-40102", "登录失败")
     ;
 
     // 异常码

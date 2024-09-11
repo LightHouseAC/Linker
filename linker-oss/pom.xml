@@ -6,7 +6,7 @@
     <parent>
         <groupId>com.aus</groupId>
         <artifactId>Linker</artifactId>
-        <version>0.0.1-SNAPSHOT</version>
+        <version>${revision}</version>
     </parent>
 
     <!-- 多模块项目 ==> 配置打包方式为 pom -->

@@ -18,7 +18,8 @@ public enum ResponseCodeEnum implements BaseExceptionInterface {
     SEX_VALID_FAIL("USER-40003", "性别错误"),
     INTRODUCTION_VALID_FAIL("USER-40004", "个人简介请设置1-100个字符"),
     UPLOAD_AVATAR_FAIL("USER-50001", "头像上传失败"),
-    UPLOAD_BACKGROUND_IMG_FAIL("USER-50002", "背景图上传失败")
+    UPLOAD_BACKGROUND_IMG_FAIL("USER-50002", "背景图上传失败"),
+    USER_NOT_FOUND("USER-40400", "该用户不存在")
     ;
 
     // 异常码

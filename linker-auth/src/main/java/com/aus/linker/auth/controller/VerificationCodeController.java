@@ -2,7 +2,7 @@ package com.aus.linker.auth.controller;
 
 import com.aus.framework.biz.operationlog.aspect.ApiOperationLog;
 import com.aus.framework.common.response.Response;
-import com.aus.linker.auth.domain.service.VerificationCodeService;
+import com.aus.linker.auth.service.VerificationCodeService;
 import com.aus.linker.auth.model.vo.verificationcode.SendVerificationCodeReqVO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;

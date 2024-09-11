@@ -6,10 +6,10 @@
     <parent>
         <groupId>com.aus</groupId>
         <artifactId>linker-oss</artifactId>
-        <version>0.0.1-SNAPSHOT</version>
+        <version>${revision}</version>
     </parent>
 
-    <groupId>com.aus.linker.oss.biz</groupId>
+    <groupId>com.aus.linker.oss</groupId>
 
     <packaging>jar</packaging>
 
@@ -87,6 +87,12 @@
         <dependency>
             <groupId>com.aus</groupId>
             <artifactId>aus-spring-boot-starter-jackson</artifactId>
+        </dependency>
+
+        <!-- 上下文组件 -->
+        <dependency>
+            <groupId>com.aus</groupId>
+            <artifactId>aus-spring-boot-starter-biz-context</artifactId>
         </dependency>
 
     </dependencies>
