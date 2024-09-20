@@ -29,6 +29,9 @@
       <module>linker-kv</module>
     <module>linker-kv/linker-kv-api</module>
     <module>linker-kv/linker-kv-biz</module>
+      <module>linker-distributed-id-generator</module>
+    <module>linker-distributed-id-generator/linker-distributed-id-generator-api</module>
+    <module>linker-distributed-id-generator/linker-distributed-id-generator-biz</module>
   </modules>
 
   <properties>
@@ -281,6 +284,13 @@
       <dependency>
         <groupId>com.aus.linker.kv</groupId>
         <artifactId>linker-kv-api</artifactId>
+        <version>${revision}</version>
+      </dependency>
+
+      <!-- 分布式 ID 服务 RPC 层 -->
+      <dependency>
+        <groupId>com.aus</groupId>
+        <artifactId>linker-distributed-id-generator-api</artifactId>
         <version>${revision}</version>
       </dependency>
 

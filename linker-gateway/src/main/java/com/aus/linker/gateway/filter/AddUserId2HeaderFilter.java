@@ -1,12 +1,19 @@
 package com.aus.linker.gateway.filter;
 
-import cn.dev33.satoken.stp.StpUtil;
+import cn.hutool.core.collection.CollUtil;
+import com.aus.framework.common.constant.GlobalConstants;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
+import com.aus.linker.gateway.constants.RedisKeyConstants;
+
+import javax.annotation.Resource;
+import java.util.List;
+import java.util.Objects;
 
 /**
  * 转发请求时，将用户 ID 添加到 Header 请求头中，透传给下游服务
@@ -15,33 +22,51 @@ import reactor.core.publisher.Mono;
 @Slf4j
 public class AddUserId2HeaderFilter implements GlobalFilter {
 
+    @Resource
+    private RedisTemplate<String, Object> redisTemplate;
+
     /**
-     * 请求头中，用户 ID 的键
+     * Header 头中 Token 的 Key
      */
-    private static final String HEADER_USER_ID = "userId";
+    private static final String TOKEN_HEADER_KEY = "Authorization";
+
+    /**
+     * Token 前缀
+     */
+    private static final String TOKEN_HEADER_VALUE_PREFIX = "Bearer ";
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         log.info("==================> TokenConvertFilter");
 
-        // 用户 ID
-        Long userId = null;
-        try {
-            // 获取当前登录用户的 ID
-            userId = StpUtil.getLoginIdAsLong();
-        } catch (Exception e) {
-            // 若没有登录则直接放行
+        // 从请求头中获取 Token 数据
+        List<String> tokenList = exchange.getRequest().getHeaders().get(TOKEN_HEADER_KEY);
+
+        if (CollUtil.isEmpty(tokenList)) {
+            // 若请求头中未携带 Token，则直接放行
             return chain.filter(exchange);
         }
 
-        log.info("## 当前登录的用户 ID：{}", userId);
+        // 获取 Token 值
+        String tokenValue = tokenList.get(0);
+        // 将 Token 前缀去除
+        String token = tokenValue.replace(TOKEN_HEADER_VALUE_PREFIX, "");
 
-        Long finalUserId = userId;
-        ServerWebExchange newExchange = exchange.mutate() // 通过 mutate 方法创建一个新的 exchange 对象，用于修改 request
-                .request(builder -> builder.header(HEADER_USER_ID, String.valueOf(finalUserId))) // 修改 request header，添加 userId
+        // 构建 Redis Key
+        String tokenRedisKey = RedisKeyConstants.SA_TOKEN_KEY_PREFIX + token;
+        // 查询 Redis, 获取用户 ID
+        Long userId = (Long) redisTemplate.opsForValue().get(tokenRedisKey);
+
+        if (Objects.isNull(userId)) {
+            // 若没有登录，则直接放行
+            return chain.filter(exchange);
+        }
+
+        log.info("## 当前登录的用户 ID: {}", userId);
+
+        ServerWebExchange newExchange = exchange.mutate()
+                .request(builder -> builder.header(GlobalConstants.USER_ID, String.valueOf(userId))) // 将用户 ID 设置到请求头中
                 .build();
-
-        // 将请求传递给过滤器链中的下一个过滤器进行处理，不对请求进行任何修改
         return chain.filter(newExchange);
     }
 

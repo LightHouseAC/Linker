@@ -100,6 +100,12 @@
             <artifactId>linker-user-api</artifactId>
         </dependency>
 
+        <!-- 引入 分布式 ID 生成服务 RPC 层 -->
+        <dependency>
+            <groupId>com.aus</groupId>
+            <artifactId>linker-distributed-id-generator-api</artifactId>
+        </dependency>
+
     </dependencies>
 
     <build>

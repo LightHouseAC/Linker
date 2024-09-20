@@ -20,6 +20,7 @@ import com.aus.linker.user.biz.enums.ResponseCodeEnum;
 import com.aus.linker.user.biz.enums.SexEnum;
 import com.aus.linker.user.biz.enums.StatusEnum;
 import com.aus.linker.user.biz.model.vo.UpdateUserInfoReqVO;
+import com.aus.linker.user.biz.rpc.DistributedIdGeneratorRpcService;
 import com.aus.linker.user.biz.rpc.OssRpcService;
 import com.aus.linker.user.dto.req.FindUserByPhoneReqDTO;
 import com.aus.linker.user.dto.req.RegisterUserReqDTO;
@@ -32,7 +33,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -67,6 +67,9 @@ public class UserServiceImpl extends ServiceImpl<UserDOMapper, UserDO>
 
     @Resource
     private RoleDOMapper roleDOMapper;
+
+    @Resource
+    private DistributedIdGeneratorRpcService distributedIdGeneratorRpcService;
 
     /**
      * 编程式事务模板
@@ -233,11 +236,19 @@ public class UserServiceImpl extends ServiceImpl<UserDOMapper, UserDO>
         return transactionTemplate.execute(status -> {
             try {
                 // 获取全局自增的Linker ID
-                Long linkerId = redisTemplate.opsForValue().increment(RedisKeyConstants.LINKER_ID_GENERATOR_KEY);
+                // Long linkerId = redisTemplate.opsForValue().increment(RedisKeyConstants.LINKER_ID_GENERATOR_KEY);
+
+                // RPC: 调用分布式 ID 生成服务生成 Linker ID
+                String linkerId = distributedIdGeneratorRpcService.getLinkerId();
+
+                // RPC: 调用分布式 ID 生成服务生成 用户 ID
+                String userIdStr = distributedIdGeneratorRpcService.getUserId();
+                Long userId = Long.valueOf(userIdStr);
 
                 UserDO userDO = UserDO.builder()
+                        .id(userId)
                         .phone(phone)
-                        .linkerId(String.valueOf(linkerId)) // 自动生成Linker ID
+                        .linkerId(linkerId) // 自动生成Linker ID
                         .nickname("林克" + linkerId) // 自动生成昵称
                         .status(StatusEnum.Enabled.getValue()) // 状态为启用
                         .createTime(LocalDateTime.now())
@@ -249,7 +260,7 @@ public class UserServiceImpl extends ServiceImpl<UserDOMapper, UserDO>
                 this.save(userDO);
 
                 // 获取用户id
-                Long userId = userDO.getId();
+                // Long userId = userDO.getId();
 
                 // 为该用户分配一个默认角色
                 UserRoleDO userRoleDO = UserRoleDO.builder()
