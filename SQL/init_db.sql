@@ -124,6 +124,7 @@ CREATE TABLE `t_note` (
                           `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
                           `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '更新时间',
                           `status` tinyint(2) NOT NULL DEFAULT '0' COMMENT '状态(0：待审核 1：正常展示 2：被删除(逻辑删除) 3：被下架)',
+                          `content_uuid` varchar(36) DEFAULT '' COMMENT '笔记内容UUID',
                           PRIMARY KEY (`id`) USING BTREE,
                           KEY `idx_creator_id` (`creator_id`),
                           KEY `idx_topic_id` (`topic_id`),

@@ -4,9 +4,13 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import lombok.Data;
 
 /**
  * 频道-话题关联表
@@ -14,6 +18,9 @@ import lombok.Data;
  */
 @TableName(value ="t_channel_topic_rel")
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 public class ChannelTopicRelDO implements Serializable {
     /**
      * 主键ID

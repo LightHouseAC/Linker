@@ -19,6 +19,7 @@
             <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
             <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
             <result property="status" column="status" jdbcType="TINYINT"/>
+            <result property="contentUuid" column="content_uuid" jdbcType="VARCHAR"/>
     </resultMap>
 
     <sql id="Base_Column_List">
@@ -26,6 +27,6 @@
         creator_id,topic_id,topic_name,
         is_top,type,img_uris,
         video_uri,visible,create_time,
-        update_time,status
+        update_time,status,content_uuid
     </sql>
 </mapper>

@@ -6,7 +6,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
-import java.util.UUID;
 
 @Data
 @AllArgsConstructor
@@ -14,7 +13,7 @@ import java.util.UUID;
 @Builder
 public class FindNoteContentReqDTO {
 
-    @NotBlank(message = "笔记 ID 不能为空")
-    private String noteId;
+    @NotBlank(message = "笔记内容 UUID 不能为空")
+    private String uuid;
 
 }

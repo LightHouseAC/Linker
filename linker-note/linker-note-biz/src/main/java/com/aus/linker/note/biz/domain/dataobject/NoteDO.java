@@ -1,12 +1,15 @@
 package com.aus.linker.note.biz.domain.dataobject;
 
-import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import lombok.Data;
 
 /**
  * 笔记表
@@ -14,6 +17,9 @@ import lombok.Data;
  */
 @TableName(value ="t_note")
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 public class NoteDO implements Serializable {
     /**
      * 主键ID
@@ -86,6 +92,11 @@ public class NoteDO implements Serializable {
      */
     private Integer status;
 
+    /**
+     * 笔记内容UUID
+     */
+    private String contentUuid;
+
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 
@@ -114,7 +125,8 @@ public class NoteDO implements Serializable {
             && (this.getVisible() == null ? other.getVisible() == null : this.getVisible().equals(other.getVisible()))
             && (this.getCreateTime() == null ? other.getCreateTime() == null : this.getCreateTime().equals(other.getCreateTime()))
             && (this.getUpdateTime() == null ? other.getUpdateTime() == null : this.getUpdateTime().equals(other.getUpdateTime()))
-            && (this.getStatus() == null ? other.getStatus() == null : this.getStatus().equals(other.getStatus()));
+            && (this.getStatus() == null ? other.getStatus() == null : this.getStatus().equals(other.getStatus()))
+            && (this.getContentUuid() == null ? other.getContentUuid() == null : this.getContentUuid().equals(other.getContentUuid()));
     }
 
     @Override
@@ -135,6 +147,7 @@ public class NoteDO implements Serializable {
         result = prime * result + ((getCreateTime() == null) ? 0 : getCreateTime().hashCode());
         result = prime * result + ((getUpdateTime() == null) ? 0 : getUpdateTime().hashCode());
         result = prime * result + ((getStatus() == null) ? 0 : getStatus().hashCode());
+        result = prime * result + ((getContentUuid() == null) ? 0 : getContentUuid().hashCode());
         return result;
     }
 
@@ -158,6 +171,7 @@ public class NoteDO implements Serializable {
         sb.append(", createTime=").append(createTime);
         sb.append(", updateTime=").append(updateTime);
         sb.append(", status=").append(status);
+        sb.append(", contentUuid=").append(contentUuid);
         sb.append(", serialVersionUID=").append(serialVersionUID);
         sb.append("]");
         return sb.toString();

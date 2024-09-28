@@ -13,7 +13,7 @@ import javax.validation.constraints.NotBlank;
 @Builder
 public class DeleteNoteContentReqDTO {
 
-    @NotBlank(message = "笔记 ID 不能为空")
-    private String noteId;
+    @NotBlank(message = "笔记内容 UUID 不能为空")
+    private String uuid;
 
 }
