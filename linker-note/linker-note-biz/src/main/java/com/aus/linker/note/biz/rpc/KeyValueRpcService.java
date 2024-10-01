@@ -4,6 +4,8 @@ import com.aus.framework.common.response.Response;
 import com.aus.linker.kv.api.KeyValueFeignApi;
 import com.aus.linker.kv.dto.req.AddNoteContentReqDTO;
 import com.aus.linker.kv.dto.req.DeleteNoteContentReqDTO;
+import com.aus.linker.kv.dto.req.FindNoteContentReqDTO;
+import com.aus.linker.kv.dto.resp.FindNoteContentRespDTO;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -51,6 +53,24 @@ public class KeyValueRpcService {
         }
 
         return true;
+    }
+
+    /**
+     * 查询笔记内容
+     * @param uuid
+     * @return
+     */
+    public String findNoteContent(String uuid) {
+        FindNoteContentReqDTO findNoteContentReqDTO = new FindNoteContentReqDTO();
+        findNoteContentReqDTO.setUuid(uuid);
+
+        Response<FindNoteContentRespDTO> response = keyValueFeignApi.findNoteContent(findNoteContentReqDTO);
+
+        if (Objects.isNull(response) || !response.isSuccess() || Objects.isNull(response.getData())) {
+            return null;
+        }
+
+        return response.getData().getContent();
     }
 
 }

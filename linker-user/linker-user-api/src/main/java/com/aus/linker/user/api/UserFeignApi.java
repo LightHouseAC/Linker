@@ -2,9 +2,11 @@ package com.aus.linker.user.api;
 
 import com.aus.framework.common.response.Response;
 import com.aus.linker.user.constant.ApiConstants;
+import com.aus.linker.user.dto.req.FindUserByIdReqDTO;
 import com.aus.linker.user.dto.req.FindUserByPhoneReqDTO;
 import com.aus.linker.user.dto.req.RegisterUserReqDTO;
 import com.aus.linker.user.dto.req.UpdateUserPasswordReqDTO;
+import com.aus.linker.user.dto.resp.FindUserByIdRespDTO;
 import com.aus.linker.user.dto.resp.FindUserByPhoneRespDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -38,5 +40,13 @@ public interface UserFeignApi {
      */
     @PostMapping(value = PREFIX + "/password/update")
     Response<?> updatePassword(@RequestBody UpdateUserPasswordReqDTO updateUserPasswordReqDTO);
+
+    /**
+     * 根据用户 ID 查询用户信息
+     * @param findUserByIdReqDTO
+     * @return
+     */
+    @PostMapping(value = PREFIX + "/findById")
+    Response<FindUserByIdRespDTO> findById(@RequestBody FindUserByIdReqDTO findUserByIdReqDTO);
 
 }

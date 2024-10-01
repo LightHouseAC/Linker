@@ -101,6 +101,12 @@
             <artifactId>linker-kv-api</artifactId>
         </dependency>
 
+        <!-- 引入 用户服务 RPC 层 -->
+        <dependency>
+            <groupId>com.aus.linker.user.api</groupId>
+            <artifactId>linker-user-api</artifactId>
+        </dependency>
+
     </dependencies>
 
     <build>

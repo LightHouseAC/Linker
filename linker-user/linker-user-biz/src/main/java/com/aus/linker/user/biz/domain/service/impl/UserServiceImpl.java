@@ -1,5 +1,6 @@
 package com.aus.linker.user.biz.domain.service.impl;
 
+import cn.hutool.core.util.RandomUtil;
 import com.aus.framework.biz.context.holder.LoginUserContextHolder;
 import com.aus.framework.common.exception.BizException;
 import com.aus.framework.common.response.Response;
@@ -22,16 +23,21 @@ import com.aus.linker.user.biz.enums.StatusEnum;
 import com.aus.linker.user.biz.model.vo.UpdateUserInfoReqVO;
 import com.aus.linker.user.biz.rpc.DistributedIdGeneratorRpcService;
 import com.aus.linker.user.biz.rpc.OssRpcService;
+import com.aus.linker.user.dto.req.FindUserByIdReqDTO;
 import com.aus.linker.user.dto.req.FindUserByPhoneReqDTO;
 import com.aus.linker.user.dto.req.RegisterUserReqDTO;
 import com.aus.linker.user.dto.req.UpdateUserPasswordReqDTO;
+import com.aus.linker.user.dto.resp.FindUserByIdRespDTO;
 import com.aus.linker.user.dto.resp.FindUserByPhoneRespDTO;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.common.base.Preconditions;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.multipart.MultipartFile;
@@ -42,6 +48,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 /**
 * @author recww
@@ -76,6 +83,18 @@ public class UserServiceImpl extends ServiceImpl<UserDOMapper, UserDO>
      */
     @Resource
     private TransactionTemplate transactionTemplate;
+
+    /**
+     * 自定义的异步线程池
+     */
+    @Resource(name = "taskExecutor")
+    private ThreadPoolTaskExecutor threadPoolTaskExecutor;
+
+    private static final Cache<Long, FindUserByIdRespDTO> LOCAL_CACHE = Caffeine.newBuilder()
+            .initialCapacity(10000) // 设置初始容量为 10000 个条目
+            .maximumSize(10000) // 设置缓存的最大容量为 10000 个条目
+            .expireAfterWrite(1, TimeUnit.HOURS) // 设置缓存条目在写入后 1 小时过期
+            .build();
 
     @Override
     public Response<?> updateUserInfo(UpdateUserInfoReqVO updateUserInfoReqVO) {
@@ -225,6 +244,75 @@ public class UserServiceImpl extends ServiceImpl<UserDOMapper, UserDO>
         // 更新密码
         updateById(userDO);
         return Response.success();
+    }
+
+    /**
+     * 根据用户 ID 查询用户信息
+     * @param findUserByIdReqDTO
+     * @return
+     */
+    @Override
+    public Response<FindUserByIdRespDTO> findUserById(FindUserByIdReqDTO findUserByIdReqDTO) {
+        Long userID = findUserByIdReqDTO.getId();
+
+        // 先从本地缓存中查询
+        FindUserByIdRespDTO findUserByIdRespDTOLocalCache = LOCAL_CACHE.getIfPresent(userID);
+        if (Objects.nonNull(findUserByIdRespDTOLocalCache)) {
+            log.info("==> 命中了本地缓存：{}", findUserByIdRespDTOLocalCache);
+            return Response.success(findUserByIdRespDTOLocalCache);
+        }
+
+        // 用户缓存 KEY
+        String userInfoRedisKey = RedisKeyConstants.buildUserInfoKey(userID);
+
+        // 先从 Redis 缓存中查询
+        String userInfoRedisValue = redisTemplate.opsForValue().get(userInfoRedisKey);
+
+        // 若 Redis 缓存中存在该用户信息
+        if (StringUtils.isNotBlank(userInfoRedisValue)) {
+            // 将存储的 Json 字符串转换成对象并返回
+            FindUserByIdRespDTO findUserByIdRespDTO = JsonUtil.parseObject(userInfoRedisValue, FindUserByIdRespDTO.class);
+            // 异步线程将用户信息存入本地缓存
+            threadPoolTaskExecutor.submit(() -> {
+                if (Objects.nonNull(findUserByIdRespDTO)) {
+                    // 写入本地缓存
+                    LOCAL_CACHE.put(userID, findUserByIdRespDTO);
+                }
+            });
+            return Response.success(findUserByIdRespDTO);
+        }
+
+        // 否则，从数据库中查询
+        // 根据用户 ID 查询用户信息
+        UserDO userDO = getById(userID);
+
+        // 判空
+        if (Objects.isNull(userDO)) {
+
+            // 防止缓存穿透，将空数据写入 Redis （给一个短的过期时间）
+            // 保底 1 分钟 + 随机秒数
+            long expireSeconds = 60 + RandomUtil.randomInt(60);
+            redisTemplate.opsForValue().set(userInfoRedisKey, "", expireSeconds, TimeUnit.SECONDS);
+
+            throw new BizException(ResponseCodeEnum.USER_NOT_FOUND);
+        }
+
+        // 构建返参
+        FindUserByIdRespDTO findUserByIdRespDTO = FindUserByIdRespDTO.builder()
+                .id(userDO.getId())
+                .nickName(userDO.getNickname())
+                .avatar(userDO.getAvatar())
+                .build();
+
+        // 异步将用户信息写入 Redis 缓存，提升响应速度
+        threadPoolTaskExecutor.submit(() -> {
+            // 过期时间，大N + 小N法，保底1天 + 随机秒数，避免大量缓存同时失效
+            long expireSeconds = 60*60+24 + RandomUtil.randomInt(60*60*24);
+            redisTemplate.opsForValue()
+                    .set(userInfoRedisKey, JsonUtil.toJsonString(findUserByIdRespDTO), expireSeconds, TimeUnit.SECONDS);
+        });
+
+        return Response.success(findUserByIdRespDTO);
     }
 
     /**

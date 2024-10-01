@@ -3,6 +3,8 @@ package com.aus.linker.note.biz.controller;
 import com.aus.framework.biz.operationlog.aspect.ApiOperationLog;
 import com.aus.framework.common.response.Response;
 import com.aus.linker.note.biz.domain.service.NoteService;
+import com.aus.linker.note.biz.model.vo.FindNoteDetailReqVO;
+import com.aus.linker.note.biz.model.vo.FindNoteDetailRespVO;
 import com.aus.linker.note.biz.model.vo.PublishNoteReqVO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -25,6 +27,12 @@ public class NoteController {
     @ApiOperationLog(description = "笔记发布")
     public Response<?> publishNote(@Validated @RequestBody PublishNoteReqVO publishNoteReqVO) {
         return noteService.publishNote(publishNoteReqVO);
+    }
+
+    @PostMapping(value = "/detail")
+    @ApiOperationLog(description = "笔记详情")
+    public Response<FindNoteDetailRespVO> findNoteDetail(@Validated @RequestBody FindNoteDetailReqVO findNoteDetailReqVO) {
+        return noteService.findNoteDetail(findNoteDetailReqVO);
     }
 
 }
