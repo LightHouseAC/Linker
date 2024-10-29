@@ -239,7 +239,7 @@ public class NoteServiceImpl extends ServiceImpl<NoteDOMapper, NoteDO>
                 // 防止缓存穿透，将空数据写入 Redis缓存
                 // 过期时间保底 1min + 随机s，防止缓存雪崩
                 long expireSeconds = 60 + RandomUtil.randomInt(60);
-                redisTemplate.opsForValue().set(noteDetailRedisKey, "null", expireSeconds);
+                redisTemplate.opsForValue().set(noteDetailRedisKey, "null", expireSeconds, TimeUnit.SECONDS);
             });
             throw new BizException(ResponseCodeEnum.NOTE_NOT_FOUND);
         }
@@ -287,11 +287,11 @@ public class NoteServiceImpl extends ServiceImpl<NoteDOMapper, NoteDO>
                 .build();
 
         // 异步线程将笔记详情存入 Redis
-        threadPoolTaskExecutor.execute(() -> {
+        threadPoolTaskExecutor.submit(() -> {
             String noteDetailJson1 = JsonUtil.toJsonString(findNoteDetailRespVO);
             // 过期时间（保底1天 + 随机秒数，防止雪崩）
             long expireSeconds = 60 * 60 * 24 + RandomUtil.randomInt(60 * 60 * 24);
-            redisTemplate.opsForValue().set(noteDetailRedisKey, noteDetailJson1, expireSeconds);
+            redisTemplate.opsForValue().set(noteDetailRedisKey, noteDetailJson1, expireSeconds, TimeUnit.SECONDS);
         });
 
         return Response.success(findNoteDetailRespVO);
