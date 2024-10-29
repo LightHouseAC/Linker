@@ -15,7 +15,9 @@ public enum ResponseCodeEnum implements BaseExceptionInterface {
     // ----------- 业务异常状态码 -----------
     NOTE_TYPE_ERROR("NOTE-40001", "未知的笔记类型"),
     NOTE_PUBLISH_FAIL("NOTE-50001", "笔记发布失败"),
-    NOTE_NOT_FOUNR("NOTE-40400", "笔记不存在"),
+    NOTE_UPDATE_FAIL("NOTE-50002", "笔记更新失败"),
+    NOTE_NOT_FOUND("NOTE-40400", "笔记不存在"),
+    TOPIC_NOT_FOUND("NOTE-40401", "话题不存在"),
     NOTE_PRIVATE("NOTE-40100", "作者已将笔记设为仅自己可见");
     ;
 

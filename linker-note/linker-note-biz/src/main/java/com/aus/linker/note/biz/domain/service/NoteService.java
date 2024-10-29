@@ -5,6 +5,7 @@ import com.aus.linker.note.biz.domain.dataobject.NoteDO;
 import com.aus.linker.note.biz.model.vo.FindNoteDetailReqVO;
 import com.aus.linker.note.biz.model.vo.FindNoteDetailRespVO;
 import com.aus.linker.note.biz.model.vo.PublishNoteReqVO;
+import com.aus.linker.note.biz.model.vo.UpdateNoteReqVO;
 import com.baomidou.mybatisplus.extension.service.IService;
 
 /**
@@ -27,5 +28,12 @@ public interface NoteService extends IService<NoteDO> {
      * @return
      */
     Response<FindNoteDetailRespVO> findNoteDetail(FindNoteDetailReqVO findNoteDetailReqVO);
+
+    /**
+     * 笔记更新
+     * @param updateNoteReqVO
+     * @return
+     */
+    Response<?> updateNote(UpdateNoteReqVO updateNoteReqVO);
 
 }

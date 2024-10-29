@@ -6,6 +6,7 @@ import com.aus.linker.note.biz.domain.service.NoteService;
 import com.aus.linker.note.biz.model.vo.FindNoteDetailReqVO;
 import com.aus.linker.note.biz.model.vo.FindNoteDetailRespVO;
 import com.aus.linker.note.biz.model.vo.PublishNoteReqVO;
+import com.aus.linker.note.biz.model.vo.UpdateNoteReqVO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -33,6 +34,12 @@ public class NoteController {
     @ApiOperationLog(description = "笔记详情")
     public Response<FindNoteDetailRespVO> findNoteDetail(@Validated @RequestBody FindNoteDetailReqVO findNoteDetailReqVO) {
         return noteService.findNoteDetail(findNoteDetailReqVO);
+    }
+
+    @PostMapping(value = "/update")
+    @ApiOperationLog(description = "笔记更新")
+    public Response<?> updateNote(@Validated @RequestBody UpdateNoteReqVO updateNoteReqVO) {
+        return noteService.updateNote(updateNoteReqVO);
     }
 
 }

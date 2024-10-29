@@ -1,5 +1,5 @@
 server:
-  port: 8000 # 指定启动端口
+  port: 19132 # 指定启动端口
 spring:
   redis:
     database: 0 # redis数据库
