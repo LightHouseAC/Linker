@@ -28,6 +28,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.common.base.Preconditions;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -40,6 +41,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -187,6 +189,7 @@ public class NoteServiceImpl extends ServiceImpl<NoteDOMapper, NoteDO>
     }
 
     @Override
+    @SneakyThrows
     public Response<FindNoteDetailRespVO> findNoteDetail(FindNoteDetailReqVO findNoteDetailReqVO) {
         // 查询的笔记 ID
         Long noteId = findNoteDetailReqVO.getId();
@@ -248,43 +251,58 @@ public class NoteServiceImpl extends ServiceImpl<NoteDOMapper, NoteDO>
         Integer visible = noteDO.getVisible();
         checkNoteVisible(visible, userId, noteDO.getCreatorId());
 
+        // 并发查询优化：使用CompletableFuture
+
         // RPC: 调用用户服务 获取 发布者详情
         Long creatorId = noteDO.getCreatorId();
-        FindUserByIdRespDTO findUserByIdRespDTO = userRpcService.findById(creatorId);
-
+        CompletableFuture<FindUserByIdRespDTO> userResultFuture = CompletableFuture
+                .supplyAsync(() -> userRpcService.findById(creatorId), threadPoolTaskExecutor);
         // RPC: 调用 KV 存储服务获取笔记内容
-        String content = null;
+        CompletableFuture<String> contentResultFuture = CompletableFuture.completedFuture(null);
         if (Objects.equals(noteDO.getIsContentEmpty(), Boolean.FALSE)) {
-            content = keyValueRpcService.findNoteContent(noteDO.getContentUuid());
+            contentResultFuture = CompletableFuture
+                    .supplyAsync(() -> keyValueRpcService.findNoteContent(noteDO.getContentUuid()), threadPoolTaskExecutor);
         }
+        CompletableFuture<String> finalContentResultFuture = contentResultFuture;
+        CompletableFuture<FindNoteDetailRespVO> resultFuture = CompletableFuture
+                .allOf(userResultFuture, contentResultFuture)
+                .thenApply(s -> {
+                    // 获取 Future 返回的结果
+                    FindUserByIdRespDTO findUserByIdRespDTO = userResultFuture.join();
+                    String content = finalContentResultFuture.join();
 
-        // 笔记类型
-        Integer type = noteDO.getType();
-        // 图文笔记图片链接 字符串
-        String imgUrisStr = noteDO.getImgUris();
-        // 图文笔记图片链接 列表
-        List<String> imgUris = null;
-        // 如果查询的是图文笔记，则将图片链接 通过逗号分隔转换成列表
-        if (Objects.equals(type, NoteTypeEnum.IMAGE_TEXT.getCode())
-            && StringUtils.isNotBlank(imgUrisStr)) {
-            imgUris = List.of(imgUrisStr.split(","));
-        }
+                    // 笔记类型
+                    Integer type = noteDO.getType();
+                    // 图文笔记图片链接 字符串
+                    String imgUrisStr = noteDO.getImgUris();
+                    // 图文笔记图片链接 列表
+                    List<String> imgUris = null;
+                    // 如果查询的是图文笔记，则将图片链接 通过逗号分隔转换成列表
+                    if (Objects.equals(type, NoteTypeEnum.IMAGE_TEXT.getCode())
+                            && StringUtils.isNotBlank(imgUrisStr)) {
+                        imgUris = List.of(imgUrisStr.split(","));
+                    }
 
-        // 构建返参 VO 实体类
-        FindNoteDetailRespVO findNoteDetailRespVO = FindNoteDetailRespVO.builder()
-                .id(noteDO.getId())
-                .type(noteDO.getType())
-                .title(noteDO.getTitle())
-                .content(content)
-                .imgUris(imgUris)
-                .topicId(noteDO.getTopicId())
-                .creatorId(creatorId)
-                .creatorName(findUserByIdRespDTO.getNickName())
-                .avatar(findUserByIdRespDTO.getAvatar())
-                .videoUri(noteDO.getVideoUri())
-                .updateTime(noteDO.getUpdateTime())
-                .visible(noteDO.getVisible())
-                .build();
+                    // 构建返参 VO 实体类
+                    return FindNoteDetailRespVO.builder()
+                            .id(noteDO.getId())
+                            .type(noteDO.getType())
+                            .title(noteDO.getTitle())
+                            .content(content)
+                            .imgUris(imgUris)
+                            .topicId(noteDO.getTopicId())
+                            .creatorId(creatorId)
+                            .creatorName(findUserByIdRespDTO.getNickName())
+                            .avatar(findUserByIdRespDTO.getAvatar())
+                            .videoUri(noteDO.getVideoUri())
+                            .updateTime(noteDO.getUpdateTime())
+                            .visible(noteDO.getVisible())
+                            .build();
+
+                });
+
+        // 获取拼装后的 FindNoteDetailRespVO
+        FindNoteDetailRespVO findNoteDetailRespVO = resultFuture.get();
 
         // 异步线程将笔记详情存入 Redis
         threadPoolTaskExecutor.submit(() -> {
