@@ -16,10 +16,7 @@ import com.aus.linker.note.biz.enums.NoteStatusEnum;
 import com.aus.linker.note.biz.enums.NoteTypeEnum;
 import com.aus.linker.note.biz.enums.NoteVisibleEnum;
 import com.aus.linker.note.biz.enums.ResponseCodeEnum;
-import com.aus.linker.note.biz.model.vo.FindNoteDetailReqVO;
-import com.aus.linker.note.biz.model.vo.FindNoteDetailRespVO;
-import com.aus.linker.note.biz.model.vo.PublishNoteReqVO;
-import com.aus.linker.note.biz.model.vo.UpdateNoteReqVO;
+import com.aus.linker.note.biz.model.vo.*;
 import com.aus.linker.note.biz.rpc.DistributedIdGeneratorRpcService;
 import com.aus.linker.note.biz.rpc.KeyValueRpcService;
 import com.aus.linker.note.biz.rpc.UserRpcService;
@@ -423,6 +420,41 @@ public class NoteServiceImpl extends ServiceImpl<NoteDOMapper, NoteDO>
     @Override
     public void deleteNoteLocalCache(Long noteId) {
         LOCAL_CACHE.invalidate(noteId);
+    }
+
+    /**
+     * 删除笔记
+     * @param deleteNoteReqVO
+     * @return
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Response<?> deleteNote(DeleteNoteReqVO deleteNoteReqVO) {
+        // 笔记 ID
+        Long noteId = deleteNoteReqVO.getId();
+
+        // 逻辑删除
+        NoteDO noteDO = NoteDO.builder()
+                .id(noteId)
+                .status(NoteStatusEnum.DELETED.getCode())
+                .updateTime(LocalDateTime.now())
+                .build();
+
+        boolean update_result = updateById(noteDO);
+
+        if (!update_result) {
+            throw new BizException(ResponseCodeEnum.NOTE_NOT_FOUND);
+        }
+
+        // 删除缓存
+        String noteDetailRedisKey = RedisKeyConstants.buildNoteDetailKey(noteId);
+        redisTemplate.delete(noteDetailRedisKey);
+
+        // 同步发送广播模式 MQ，将所有实例的本地缓存都删除掉
+        rocketMQTemplate.syncSend(MQConstants.TOPIC_DELETE_NOTE_LOCAL_CACHE, noteId);
+        log.info("===> MQ: 删除本地缓存通知发送成功");
+
+        return Response.success();
     }
 
     /**

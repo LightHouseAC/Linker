@@ -3,10 +3,7 @@ package com.aus.linker.note.biz.controller;
 import com.aus.framework.biz.operationlog.aspect.ApiOperationLog;
 import com.aus.framework.common.response.Response;
 import com.aus.linker.note.biz.domain.service.NoteService;
-import com.aus.linker.note.biz.model.vo.FindNoteDetailReqVO;
-import com.aus.linker.note.biz.model.vo.FindNoteDetailRespVO;
-import com.aus.linker.note.biz.model.vo.PublishNoteReqVO;
-import com.aus.linker.note.biz.model.vo.UpdateNoteReqVO;
+import com.aus.linker.note.biz.model.vo.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -40,6 +37,12 @@ public class NoteController {
     @ApiOperationLog(description = "笔记更新")
     public Response<?> updateNote(@Validated @RequestBody UpdateNoteReqVO updateNoteReqVO) {
         return noteService.updateNote(updateNoteReqVO);
+    }
+
+    @PostMapping(value = "/delete")
+    @ApiOperationLog(description = "删除笔记")
+    public Response<?> deleteNote(@Validated @RequestBody DeleteNoteReqVO deleteNoteReqVO) {
+        return noteService.deleteNote(deleteNoteReqVO);
     }
 
 }

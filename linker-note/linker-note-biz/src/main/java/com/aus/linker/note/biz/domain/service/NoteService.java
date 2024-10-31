@@ -2,10 +2,7 @@ package com.aus.linker.note.biz.domain.service;
 
 import com.aus.framework.common.response.Response;
 import com.aus.linker.note.biz.domain.dataobject.NoteDO;
-import com.aus.linker.note.biz.model.vo.FindNoteDetailReqVO;
-import com.aus.linker.note.biz.model.vo.FindNoteDetailRespVO;
-import com.aus.linker.note.biz.model.vo.PublishNoteReqVO;
-import com.aus.linker.note.biz.model.vo.UpdateNoteReqVO;
+import com.aus.linker.note.biz.model.vo.*;
 import com.baomidou.mybatisplus.extension.service.IService;
 
 /**
@@ -41,5 +38,12 @@ public interface NoteService extends IService<NoteDO> {
      * @param noteId
      */
     void deleteNoteLocalCache(Long noteId);
+
+    /**
+     * 删除笔记
+     * @param deleteNoteReqVO
+     * @return
+     */
+    Response<?> deleteNote(DeleteNoteReqVO deleteNoteReqVO);
 
 }
