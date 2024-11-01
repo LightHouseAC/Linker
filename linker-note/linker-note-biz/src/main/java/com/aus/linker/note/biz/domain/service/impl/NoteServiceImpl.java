@@ -21,6 +21,7 @@ import com.aus.linker.note.biz.rpc.DistributedIdGeneratorRpcService;
 import com.aus.linker.note.biz.rpc.KeyValueRpcService;
 import com.aus.linker.note.biz.rpc.UserRpcService;
 import com.aus.linker.user.dto.resp.FindUserByIdRespDTO;
+import com.baomidou.mybatisplus.core.conditions.query.Query;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.github.benmanes.caffeine.cache.Cache;
@@ -451,6 +452,87 @@ public class NoteServiceImpl extends ServiceImpl<NoteDOMapper, NoteDO>
         redisTemplate.delete(noteDetailRedisKey);
 
         // 同步发送广播模式 MQ，将所有实例的本地缓存都删除掉
+        rocketMQTemplate.syncSend(MQConstants.TOPIC_DELETE_NOTE_LOCAL_CACHE, noteId);
+        log.info("===> MQ: 删除本地缓存通知发送成功");
+
+        return Response.success();
+    }
+
+    /**
+     * 笔记设为仅自己可见
+     * @param updateNoteVisibleOnlyMeReqVO
+     * @return
+     */
+    @Override
+    public Response<?> visibleOnlyMe(UpdateNoteVisibleOnlyMeReqVO updateNoteVisibleOnlyMeReqVO) {
+        // 笔记 ID
+        Long noteId = updateNoteVisibleOnlyMeReqVO.getId();
+
+        // 构建更新 DO 实体类
+        NoteDO noteDO = NoteDO.builder()
+                .id(noteId)
+                .visible(NoteVisibleEnum.PRIVATE.getCode())
+                .updateTime(LocalDateTime.now())
+                .build();
+
+        QueryWrapper<NoteDO> wrapper = new QueryWrapper<>();
+        wrapper.eq("id", noteId);
+        wrapper.eq("status", NoteStatusEnum.NORMAL.getCode());
+
+        boolean updated = update(noteDO, wrapper);
+        if (!updated) {
+            throw new BizException(ResponseCodeEnum.NOTE_CANT_SET_VISIBLE_ONLY_ME);
+        }
+
+        // 删除 Redis 缓存
+        String noteDetailKey = RedisKeyConstants.buildNoteDetailKey(noteId);
+        redisTemplate.delete(noteDetailKey);
+
+        // 同步发送 MQ 广播删除所有实例中的本地缓存
+        rocketMQTemplate.syncSend(MQConstants.TOPIC_DELETE_NOTE_LOCAL_CACHE, noteId);
+        log.info("===> MQ: 删除本地缓存通知发送成功");
+
+        return Response.success();
+    }
+
+    /**
+     * 笔记置顶 / 取消置顶
+     * @param topNoteReqVO
+     * @return
+     */
+    @Override
+    public Response<?> topNote(TopNoteReqVO topNoteReqVO) {
+        // 笔记 ID
+        Long noteId = topNoteReqVO.getId();
+        // 是否置顶
+        Boolean isTop = topNoteReqVO.getIsTop();
+
+        // 当前登录用户 ID
+        Long currUserId = LoginUserContextHolder.getUserId();
+
+        // 构建置顶/取消置顶 DO 实体类
+        NoteDO noteDO = NoteDO.builder()
+                .id(noteId)
+                .isTop(isTop)
+                .updateTime(LocalDateTime.now())
+                .creatorId(currUserId) // 仅笔记所有者可置顶/取消置顶该笔记
+                .build();
+
+        QueryWrapper<NoteDO> wrapper = new QueryWrapper<>();
+        wrapper.eq("id", noteId);
+        wrapper.eq("creatorId", currUserId);
+
+        boolean updated = update(noteDO, wrapper);
+
+        if (!updated) {
+            throw new BizException(ResponseCodeEnum.NOTE_CANT_OPERATE);
+        }
+
+        // 删除 Redis 缓存
+        String noteDetailRedisKey = RedisKeyConstants.buildNoteDetailKey(noteId);
+        redisTemplate.delete(noteDetailRedisKey);
+
+        // 同步发送广播模式 MQ，将所有实例中的本地缓存都删除掉
         rocketMQTemplate.syncSend(MQConstants.TOPIC_DELETE_NOTE_LOCAL_CACHE, noteId);
         log.info("===> MQ: 删除本地缓存通知发送成功");
 

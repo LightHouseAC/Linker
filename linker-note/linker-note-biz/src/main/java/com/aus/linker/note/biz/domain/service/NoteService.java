@@ -46,4 +46,18 @@ public interface NoteService extends IService<NoteDO> {
      */
     Response<?> deleteNote(DeleteNoteReqVO deleteNoteReqVO);
 
+    /**
+     * 笔记设为仅我可见
+     * @param updateNoteVisibleOnlyMeReqVO
+     * @return
+     */
+    Response<?> visibleOnlyMe(UpdateNoteVisibleOnlyMeReqVO updateNoteVisibleOnlyMeReqVO);
+
+    /**
+     * 笔记置顶 / 取消置顶
+     * @param topNoteReqVO
+     * @return
+     */
+    Response<?> topNote(TopNoteReqVO topNoteReqVO);
+
 }
