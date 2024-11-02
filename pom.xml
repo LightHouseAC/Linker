@@ -34,6 +34,10 @@
     <module>linker-distributed-id-generator/linker-distributed-id-generator-biz</module>
     <module>linker-note</module>
     <module>linker-note/linker-note-biz</module>
+      <module>linker-user-relation</module>
+    <module>linker-user-relation/linker-user-relation-api</module>
+    <module>linker-user-relation/linker-user-relation-api</module>
+    <module>linker-user-relation/linker-user-relation-biz</module>
   </modules>
 
   <properties>

@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: linker-user-relation
+  profiles:
+    active: dev
+  cloud:
+    nacos:
+      discovery:
+        enabled: true
+        group: DEFAULT_GROUP
+        namespace: linker
+        server-addr: http://127.0.0.1:8848
+      config:
+        server-addr: http://127.0.0.1:8848
+        prefix: ${spring.application.name}
+        group: DEFAULT_GROUP
+        namespace: linker
+        file-extension: yaml
+        refresh-enabled: true

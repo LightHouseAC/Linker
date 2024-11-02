@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="Encoding">
+    <file url="file://$PROJECT_DIR$/linker-auth/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/linker-auth/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/linker-distributed-id-generator/linker-distributed-id-generator-api/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/linker-distributed-id-generator/linker-distributed-id-generator-api/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/linker-distributed-id-generator/linker-distributed-id-generator-biz/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/linker-distributed-id-generator/linker-distributed-id-generator-biz/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/linker-distributed-id-generator/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/linker-distributed-id-generator/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/linker-framework/aus-spring-boot-starter-biz-context/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/linker-framework/aus-spring-boot-starter-biz-context/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/linker-framework/aus-spring-boot-starter-biz-operationlog/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/linker-framework/aus-spring-boot-starter-biz-operationlog/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/linker-framework/aus-spring-boot-starter-jackson/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/linker-framework/aus-spring-boot-starter-jackson/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/linker-framework/linker-common/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/linker-framework/linker-common/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/linker-framework/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/linker-framework/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/linker-gateway/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/linker-gateway/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/linker-kv/linker-kv-api/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/linker-kv/linker-kv-api/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/linker-kv/linker-kv-biz/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/linker-kv/linker-kv-biz/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/linker-kv/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/linker-kv/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/linker-note/linker-note-api/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/linker-note/linker-note-api/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/linker-note/linker-note-biz/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/linker-note/linker-note-biz/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/linker-note/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/linker-note/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/linker-oss/linker-oss-api/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/linker-oss/linker-oss-api/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/linker-oss/linker-oss-biz/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/linker-oss/linker-oss-biz/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/linker-oss/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/linker-oss/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/linker-user-relation/linker-user-relation-api/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/linker-user-relation/linker-user-relation-api/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/linker-user-relation/linker-user-relation-biz/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/linker-user-relation/linker-user-relation-biz/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/linker-user-relation/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/linker-user-relation/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/linker-user/linker-user-api/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/linker-user/linker-user-api/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/linker-user/linker-user-biz/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/linker-user/linker-user-biz/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/linker-user/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/linker-user/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/src/main/resources" charset="UTF-8" />
+  </component>
+</project>
