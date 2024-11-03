@@ -89,6 +89,12 @@
             <artifactId>spring-boot-starter-data-redis</artifactId>
         </dependency>
 
+        <!-- 引入 RPC层：用户服务 -->
+        <dependency>
+            <groupId>com.aus.linker.user.api</groupId>
+            <artifactId>linker-user-api</artifactId>
+        </dependency>
+
     </dependencies>
 
     <build>

@@ -33,6 +33,12 @@ spring:
             - Path=/note/**
           filters:
             - StripPrefix=1
+        - id: user-relation
+          uri: lb://linker-user-relation
+          predicates:
+            - Path=/relation/**
+          filters:
+            - StripPrefix=1
 
 ############## Sa-Token 配置 (文档: https://sa-token.cc) ##############
 sa-token:

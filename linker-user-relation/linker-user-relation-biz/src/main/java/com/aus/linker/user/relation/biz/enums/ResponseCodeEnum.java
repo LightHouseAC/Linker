@@ -13,6 +13,8 @@ public enum ResponseCodeEnum implements BaseExceptionInterface {
     PARAM_NOT_VALID("RELATION-40000", "请求参数错误"),
 
     // ----------- 业务异常状态码 -----------
+    CANT_FOLLOW_YOURSELF("RELATION-40300", "无法关注自己"),
+    FOLLOW_USER_NOT_EXISTS("RELATION-40400", "关注的用户不存在")
     ;
 
     // 异常码
