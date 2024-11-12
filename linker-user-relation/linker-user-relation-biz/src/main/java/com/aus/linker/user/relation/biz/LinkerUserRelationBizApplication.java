@@ -1,4 +1,4 @@
-package com.aus.linker.user.relation.biz.domain;
+package com.aus.linker.user.relation.biz;
 
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
