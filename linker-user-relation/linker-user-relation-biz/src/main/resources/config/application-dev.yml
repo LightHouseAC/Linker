@@ -50,3 +50,15 @@ spring:
         wall:
           config:
             multi-statement-allow: true
+
+rocketmq:
+  name-server: 127.0.0.1:9876 # name server 地址
+  producer:
+    group: linker_group
+    send-message-timeout: 3000 # 消息发送超时时间，默认3s
+    retry-times-when-send-failed: 3 # 同步发送消息失败后，重试次数
+    retry-times-when-send-async-failed: 3 # 异步发送消息失败后，重试次数
+    max-message-size: 4096 # 消息最大大小（单位：字节）
+  consumer:
+    group: linker_group
+    pull-batch-size: 5 # 每次拉取的最大消息数

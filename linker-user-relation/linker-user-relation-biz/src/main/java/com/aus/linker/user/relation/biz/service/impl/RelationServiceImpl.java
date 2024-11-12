@@ -6,20 +6,28 @@ import com.aus.framework.biz.context.holder.LoginUserContextHolder;
 import com.aus.framework.common.exception.BizException;
 import com.aus.framework.common.response.Response;
 import com.aus.framework.common.utils.DateUtils;
+import com.aus.framework.common.utils.JsonUtil;
 import com.aus.linker.user.dto.resp.FindUserByIdRespDTO;
+import com.aus.linker.user.relation.biz.constant.MQConstants;
 import com.aus.linker.user.relation.biz.constant.RedisKeyConstants;
 import com.aus.linker.user.relation.biz.domain.dataobject.FollowingDO;
 import com.aus.linker.user.relation.biz.domain.service.FollowingService;
 import com.aus.linker.user.relation.biz.enums.LuaResultEnum;
 import com.aus.linker.user.relation.biz.enums.ResponseCodeEnum;
+import com.aus.linker.user.relation.biz.model.dto.FollowUserMqDTO;
 import com.aus.linker.user.relation.biz.model.vo.FollowUserReqVO;
 import com.aus.linker.user.relation.biz.rpc.UserRpcService;
 import com.aus.linker.user.relation.biz.service.RelationService;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.rocketmq.client.producer.SendCallback;
+import org.apache.rocketmq.client.producer.SendResult;
+import org.apache.rocketmq.spring.core.RocketMQTemplate;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
+import org.springframework.messaging.Message;
+import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.scripting.support.ResourceScriptSource;
 import org.springframework.stereotype.Service;
 
@@ -41,6 +49,9 @@ public class RelationServiceImpl implements RelationService {
 
     @Resource
     private FollowingService followingService;
+
+    @Resource
+    private RocketMQTemplate rocketMQTemplate;
 
     /**
      * 关注用户
@@ -121,7 +132,34 @@ public class RelationServiceImpl implements RelationService {
                 checkLuaScriptResult(result);
             }
         }
-        // TODO: 发送 MQ
+        // 发送 MQ
+        // 构建消息体 DTO
+        FollowUserMqDTO followUserMqDTO = FollowUserMqDTO.builder()
+                .userId(userId)
+                .followUserId(followUserId)
+                .createTime(now)
+                .build();
+
+        // 构建消息对象，并将 DTO 转成 Json 字符串设置到消息体中
+        Message<String> message = MessageBuilder.withPayload(JsonUtil.toJsonString(followUserMqDTO)).build();
+
+        // 通过冒号连接，可让 MQ 发送给主题 Topic 时，携带上标签 Tag
+        String destination = MQConstants.TOPIC_FOLLOW_OR_UNFOLLOW + ":" + MQConstants.TAG_FOLLOW;
+
+        log.info("==> 开始发送关注操作 MQ, 消息体: {}", followUserMqDTO);
+
+        // 异步发送 MQ 消息，提升接口响应速度
+        rocketMQTemplate.asyncSend(destination, message, new SendCallback() {
+            @Override
+            public void onSuccess(SendResult sendResult) {
+                log.info("==> MQ 发送成功, SendResult: {}", sendResult);
+            }
+
+            @Override
+            public void onException(Throwable throwable) {
+                log.error("==> MQ 发送异常: ", throwable);
+            }
+        });
 
         return Response.success();
     }
