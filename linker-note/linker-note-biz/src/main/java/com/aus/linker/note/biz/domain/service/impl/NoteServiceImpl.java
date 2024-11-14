@@ -21,7 +21,6 @@ import com.aus.linker.note.biz.rpc.DistributedIdGeneratorRpcService;
 import com.aus.linker.note.biz.rpc.KeyValueRpcService;
 import com.aus.linker.note.biz.rpc.UserRpcService;
 import com.aus.linker.user.dto.resp.FindUserByIdRespDTO;
-import com.baomidou.mybatisplus.core.conditions.query.Query;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.github.benmanes.caffeine.cache.Cache;
@@ -355,6 +354,20 @@ public class NoteServiceImpl extends ServiceImpl<NoteDOMapper, NoteDO>
                 break;
         }
 
+        // 当前登录用户 ID
+        Long currUserId = LoginUserContextHolder.getUserId();
+        NoteDO selectNoteDO = getById(noteId);
+
+        // 笔记不存在
+        if (Objects.isNull(selectNoteDO)) {
+            throw new BizException(ResponseCodeEnum.NOTE_NOT_FOUND);
+        }
+
+        // 判断权限：非笔记发布者不允许更新笔记
+        if (!Objects.equals(currUserId, selectNoteDO.getCreatorId())) {
+            throw new BizException(ResponseCodeEnum.NOTE_CANT_OPERATE);
+        }
+
         // 话题
         Long topicId = updateNoteReqVO.getTopicId();
         String topicName = null;
@@ -434,6 +447,19 @@ public class NoteServiceImpl extends ServiceImpl<NoteDOMapper, NoteDO>
         // 笔记 ID
         Long noteId = deleteNoteReqVO.getId();
 
+        NoteDO selectNoteDO = getById(noteId);
+
+        // 判断笔记是否存在
+        if (Objects.isNull(selectNoteDO)) {
+            throw new BizException(ResponseCodeEnum.NOTE_NOT_FOUND);
+        }
+
+        // 判断权限：非笔记发布者不允许删除笔记
+        Long currUserId = LoginUserContextHolder.getUserId();
+        if (!Objects.equals(currUserId, selectNoteDO.getCreatorId())) {
+            throw new BizException(ResponseCodeEnum.NOTE_CANT_OPERATE);
+        }
+
         // 逻辑删除
         NoteDO noteDO = NoteDO.builder()
                 .id(noteId)
@@ -467,6 +493,18 @@ public class NoteServiceImpl extends ServiceImpl<NoteDOMapper, NoteDO>
     public Response<?> visibleOnlyMe(UpdateNoteVisibleOnlyMeReqVO updateNoteVisibleOnlyMeReqVO) {
         // 笔记 ID
         Long noteId = updateNoteVisibleOnlyMeReqVO.getId();
+
+        NoteDO selectNoteDO = getById(noteId);
+        // 判断笔记是否存在
+        if (Objects.isNull(selectNoteDO)) {
+            throw new BizException(ResponseCodeEnum.NOTE_NOT_FOUND);
+        }
+
+        // 判断权限：非笔记发布者不允许设为仅自己可见
+        Long currUserId = LoginUserContextHolder.getUserId();
+        if (!Objects.equals(currUserId, selectNoteDO.getCreatorId())) {
+            throw new BizException(ResponseCodeEnum.NOTE_CANT_OPERATE);
+        }
 
         // 构建更新 DO 实体类
         NoteDO noteDO = NoteDO.builder()
