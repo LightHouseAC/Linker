@@ -7,6 +7,7 @@ import com.aus.linker.user.relation.biz.domain.dataobject.FollowingDO;
 import com.aus.linker.user.relation.biz.domain.service.FansService;
 import com.aus.linker.user.relation.biz.domain.service.FollowingService;
 import com.aus.linker.user.relation.biz.model.dto.FollowUserMqDTO;
+import com.google.common.util.concurrent.RateLimiter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.common.message.Message;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
@@ -34,8 +35,14 @@ public class FollowUnfollowConsumer implements RocketMQListener<Message> {
     @Resource
     private TransactionTemplate transactionTemplate;
 
+    // 限制每秒处理 5000 条消息
+    private RateLimiter rateLimiter = RateLimiter.create(5000);
+
     @Override
     public void onMessage(Message message) {
+        // 流量削峰：通过获取令牌实现，若没有令牌则阻塞等待令牌
+        rateLimiter.acquire();
+
         // 消息体
         String bodyJsonStr = new String(message.getBody());
         // 标签
