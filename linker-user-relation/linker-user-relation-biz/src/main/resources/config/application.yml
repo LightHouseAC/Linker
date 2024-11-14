@@ -4,3 +4,7 @@ server:
 spring:
   profiles:
     active: dev
+
+mq-consumer: # MQ 消费者配置
+  follow-unfollow: # 关注/取关
+    rate-limit: 3000 # 每秒限流阈值

@@ -35,8 +35,9 @@ public class FollowUnfollowConsumer implements RocketMQListener<Message> {
     @Resource
     private TransactionTemplate transactionTemplate;
 
-    // 限制每秒处理 5000 条消息
-    private RateLimiter rateLimiter = RateLimiter.create(5000);
+    // 令牌桶：限制每秒处理的消息数
+    @Resource
+    private RateLimiter rateLimiter;
 
     @Override
     public void onMessage(Message message) {
