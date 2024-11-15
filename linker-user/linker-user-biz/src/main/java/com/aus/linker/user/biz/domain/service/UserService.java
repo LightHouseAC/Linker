@@ -3,13 +3,13 @@ package com.aus.linker.user.biz.domain.service;
 import com.aus.framework.common.response.Response;
 import com.aus.linker.user.biz.domain.dataobject.UserDO;
 import com.aus.linker.user.biz.model.vo.UpdateUserInfoReqVO;
-import com.aus.linker.user.dto.req.FindUserByIdReqDTO;
-import com.aus.linker.user.dto.req.FindUserByPhoneReqDTO;
-import com.aus.linker.user.dto.req.RegisterUserReqDTO;
-import com.aus.linker.user.dto.req.UpdateUserPasswordReqDTO;
+import com.aus.linker.user.dto.req.*;
+import com.aus.linker.user.dto.resp.FindMultiUserByIdsRespDTO;
 import com.aus.linker.user.dto.resp.FindUserByIdRespDTO;
 import com.aus.linker.user.dto.resp.FindUserByPhoneRespDTO;
 import com.baomidou.mybatisplus.extension.service.IService;
+
+import java.util.List;
 
 /**
 * @author recww
@@ -52,6 +52,13 @@ public interface UserService extends IService<UserDO> {
      * @param findUserByIdReqDTO
      * @return
      */
-    Response<FindUserByIdRespDTO> findUserById(FindUserByIdReqDTO findUserByIdReqDTO);
+    Response<FindUserByIdRespDTO> findById(FindUserByIdReqDTO findUserByIdReqDTO);
+
+    /**
+     * 批量根据用户 ID 查询用户信息
+     * @param findMultiUserByIdsReqDTO
+     * @return
+     */
+    Response<List<FindMultiUserByIdsRespDTO>> findByIds(FindMultiUserByIdsReqDTO findMultiUserByIdsReqDTO);
 
 }

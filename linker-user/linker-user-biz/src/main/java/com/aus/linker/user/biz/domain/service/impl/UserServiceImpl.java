@@ -1,5 +1,6 @@
 package com.aus.linker.user.biz.domain.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.RandomUtil;
 import com.aus.framework.biz.context.holder.LoginUserContextHolder;
 import com.aus.framework.common.exception.BizException;
@@ -23,10 +24,8 @@ import com.aus.linker.user.biz.enums.StatusEnum;
 import com.aus.linker.user.biz.model.vo.UpdateUserInfoReqVO;
 import com.aus.linker.user.biz.rpc.DistributedIdGeneratorRpcService;
 import com.aus.linker.user.biz.rpc.OssRpcService;
-import com.aus.linker.user.dto.req.FindUserByIdReqDTO;
-import com.aus.linker.user.dto.req.FindUserByPhoneReqDTO;
-import com.aus.linker.user.dto.req.RegisterUserReqDTO;
-import com.aus.linker.user.dto.req.UpdateUserPasswordReqDTO;
+import com.aus.linker.user.dto.req.*;
+import com.aus.linker.user.dto.resp.FindMultiUserByIdsRespDTO;
 import com.aus.linker.user.dto.resp.FindUserByIdRespDTO;
 import com.aus.linker.user.dto.resp.FindUserByPhoneRespDTO;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -34,6 +33,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -47,8 +47,10 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
 * @author recww
@@ -67,7 +69,7 @@ public class UserServiceImpl extends ServiceImpl<UserDOMapper, UserDO>
     private OssRpcService ossRpcService;
 
     @Resource
-    private RedisTemplate<String, String> redisTemplate;
+    private RedisTemplate<String, Object> redisTemplate;
 
     @Resource
     private UserRoleDOMapper userRoleDOMapper;
@@ -252,7 +254,7 @@ public class UserServiceImpl extends ServiceImpl<UserDOMapper, UserDO>
      * @return
      */
     @Override
-    public Response<FindUserByIdRespDTO> findUserById(FindUserByIdReqDTO findUserByIdReqDTO) {
+    public Response<FindUserByIdRespDTO> findById(FindUserByIdReqDTO findUserByIdReqDTO) {
         Long userID = findUserByIdReqDTO.getId();
 
         // 先从本地缓存中查询
@@ -266,7 +268,7 @@ public class UserServiceImpl extends ServiceImpl<UserDOMapper, UserDO>
         String userInfoRedisKey = RedisKeyConstants.buildUserInfoKey(userID);
 
         // 先从 Redis 缓存中查询
-        String userInfoRedisValue = redisTemplate.opsForValue().get(userInfoRedisKey);
+        String userInfoRedisValue = (String) redisTemplate.opsForValue().get(userInfoRedisKey);
 
         // 若 Redis 缓存中存在该用户信息
         if (StringUtils.isNotBlank(userInfoRedisValue)) {
@@ -313,6 +315,85 @@ public class UserServiceImpl extends ServiceImpl<UserDOMapper, UserDO>
         });
 
         return Response.success(findUserByIdRespDTO);
+    }
+
+    @Override
+    public Response<List<FindMultiUserByIdsRespDTO>> findByIds(FindMultiUserByIdsReqDTO findMultiUserByIdsReqDTO) {
+        // 需要查询的用户 ID 集合
+        List<Long> userIds = findMultiUserByIdsReqDTO.getIds();
+
+        // 构建 Redis Key 集合
+        List<String> redisKeys = userIds.stream()
+                .map(RedisKeyConstants::buildUserInfoKey)
+                .toList();
+
+        // 先从 Redis 缓存中查，multiGet 批量查询提升性能
+        List<Object> redisValues = redisTemplate.opsForValue().multiGet(redisKeys);
+        // 如果缓存中不为空
+        if (CollUtil.isNotEmpty(redisValues)) {
+            // 过滤掉为空的数据
+            redisValues = redisValues.stream().filter(Objects::nonNull).toList();
+        }
+
+        // 返参
+        List<FindMultiUserByIdsRespDTO> findMultiUserByIdsRespDTOS = Lists.newArrayList();
+
+        // 将过滤后的缓存集合，转换为 DTO 返参实体类
+        if (CollUtil.isNotEmpty(redisValues)) {
+            findMultiUserByIdsRespDTOS = redisValues.stream()
+                    .map(value -> JsonUtil.parseObject(String.valueOf(value), FindMultiUserByIdsRespDTO.class))
+                    .collect(Collectors.toList());
+        }
+
+        // 如果被查询的用户信息，都在 Redis 缓存中，则直接返回
+        if (CollUtil.size(userIds) == CollUtil.size(findMultiUserByIdsRespDTOS)) {
+            return Response.success(findMultiUserByIdsRespDTOS);
+        }
+
+        // 其他情况：1) 缓存里没有用户信息数据 2) 缓存中数据不全，需去数据库中查询
+        // 筛选出缓存里没有的用户数据，查询数据库
+        List<Long> userIdsNeedQuery = null;
+
+        if (CollUtil.isNotEmpty(findMultiUserByIdsRespDTOS)) {
+            // 将 findMultiUsersByIdsRespDTOS 集合转 Map
+            Map<Long, FindMultiUserByIdsRespDTO> map = findMultiUserByIdsRespDTOS.stream()
+                    .collect(Collectors.toMap(FindMultiUserByIdsRespDTO::getId, p -> p));
+
+            // 筛选出需要查 DB 的用户 ID
+            userIdsNeedQuery = userIds.stream()
+                    .filter(id -> Objects.isNull(map.get(id)))
+                    .toList();
+        } else { // 缓存中一条用户信息都没查到，则提交的用户 ID 集合都需要查数据库
+            userIdsNeedQuery = userIds;
+        }
+
+        // 从数据库中批量查询
+        List<UserDO> userDOS = listByIds(userIdsNeedQuery);
+
+        List<FindMultiUserByIdsRespDTO> findMultiUserByIdsRespDTOS1 = null;
+
+        // 若数据库查询的记录不为空
+        if (CollUtil.isNotEmpty(userDOS)) {
+            // DO 转 DTO
+            findMultiUserByIdsRespDTOS1 = userDOS.stream()
+                    .map(userDO -> FindMultiUserByIdsRespDTO.builder()
+                            .id(userDO.getId())
+                            .nickName(userDO.getNickname())
+                            .avatar(userDO.getAvatar())
+                            .introduction(userDO.getIntroduction())
+                            .build())
+                    .collect(Collectors.toList());
+
+            // TODO: 异步线程将用户信息同步到 Redis 中
+        }
+
+        // 合并数据
+        if (CollUtil.isNotEmpty(findMultiUserByIdsRespDTOS1)) {
+            findMultiUserByIdsRespDTOS.addAll(findMultiUserByIdsRespDTOS1);
+        }
+
+        return Response.success(findMultiUserByIdsRespDTOS);
+
     }
 
     /**
