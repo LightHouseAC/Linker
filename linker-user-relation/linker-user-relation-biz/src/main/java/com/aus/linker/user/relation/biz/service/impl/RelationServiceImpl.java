@@ -150,8 +150,13 @@ public class RelationServiceImpl implements RelationService {
 
         log.info("==> 开始发送关注操作消息到 MQ, 消息体: {}", followUserMqDTO);
 
+        // 一个用户可能短期内有高并发的被关注/被取关操作
+        // 用被操作用户 ID 作为队列 Hash Key可能造成大量消息发进一个队列中，造成单点瓶颈
+        // 因此使用操作发起人的 ID 作为 队列 Hash Key，一个用户同时能进行的关注/取关操作次数有限
+        String hashKey = String.valueOf(userId);
+
         // 异步发送 MQ 消息，提升接口响应速度
-        rocketMQTemplate.asyncSend(destination, message, new SendCallback() {
+        rocketMQTemplate.asyncSendOrderly(destination, message, hashKey, new SendCallback() {
             @Override
             public void onSuccess(SendResult sendResult) {
                 log.info("==> 消息发送到 MQ 成功， SendResult: {}", sendResult);
@@ -246,7 +251,10 @@ public class RelationServiceImpl implements RelationService {
 
         log.info("==> 开始发送取关操作消息到 MQ, 消息体: {}", unfollowUserMqDTO);
 
-        rocketMQTemplate.asyncSend(destination, message, new SendCallback() {
+        // 使用操作发起人的 ID 作为 队列 Hash Key
+        String hashKey = String.valueOf(userId);
+
+        rocketMQTemplate.asyncSendOrderly(destination, message, hashKey, new SendCallback() {
 
             @Override
             public void onSuccess(SendResult sendResult) {
