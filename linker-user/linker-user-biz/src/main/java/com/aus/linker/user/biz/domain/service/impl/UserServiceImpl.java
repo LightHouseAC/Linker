@@ -36,6 +36,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
@@ -384,7 +385,32 @@ public class UserServiceImpl extends ServiceImpl<UserDOMapper, UserDO>
                             .build())
                     .collect(Collectors.toList());
 
-            // TODO: 异步线程将用户信息同步到 Redis 中
+            // 异步线程将用户信息同步到 Redis 中
+            List<FindMultiUserByIdsRespDTO> finalFindMultiUserByIdsRespDTOS = findMultiUserByIdsRespDTOS1;
+            threadPoolTaskExecutor.submit(() -> {
+                // DTO 集合转 Map
+                Map<Long, FindMultiUserByIdsRespDTO> map = finalFindMultiUserByIdsRespDTOS.stream()
+                        .collect(Collectors.toMap(FindMultiUserByIdsRespDTO::getId, p -> p));
+
+                // 执行 pipeline 操作
+                redisTemplate.executePipelined((RedisCallback<Void>) connection-> {
+                    for (UserDO userDO : userDOS) {
+                        Long userId = userDO.getId();
+
+                        // 用户信息缓存 Redis Key
+                        String userInfoRedisKey = RedisKeyConstants.buildUserInfoKey(userId);
+
+                        // DTO 转 Json 字符串
+                        FindMultiUserByIdsRespDTO findMultiUserByIdsRespDTO = map.get(userId);
+                        String value = JsonUtil.toJsonString(findMultiUserByIdsRespDTO);
+
+                        // 过期时间（保底 1 天 + 随机秒数）
+                        long expireSeconds = 60 * 60 * 24 + RandomUtil.randomInt(60 * 60 * 24);
+                        redisTemplate.opsForValue().set(userInfoRedisKey, value, expireSeconds, TimeUnit.SECONDS);
+                    }
+                    return null;
+                });
+            });
         }
 
         // 合并数据
