@@ -3,6 +3,7 @@ package com.aus.linker.user.relation.biz.controller;
 import com.aus.framework.biz.operationlog.aspect.ApiOperationLog;
 import com.aus.framework.common.response.Response;
 import com.aus.linker.user.relation.biz.model.vo.FollowUserReqVO;
+import com.aus.linker.user.relation.biz.model.vo.UnfollowUserReqVO;
 import com.aus.linker.user.relation.biz.service.RelationService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -25,6 +26,12 @@ public class RelationController {
     @ApiOperationLog(description = "关注用户")
     public Response<?> follow(@Validated @RequestBody FollowUserReqVO followUserReqVO) {
         return relationService.follow(followUserReqVO);
+    }
+
+    @PostMapping("/unfollow")
+    @ApiOperationLog(description = "取关用户")
+    public Response<?> unfollow(@Validated @RequestBody UnfollowUserReqVO unfollowUserReqVO) {
+        return relationService.unfollow(unfollowUserReqVO);
     }
 
 }

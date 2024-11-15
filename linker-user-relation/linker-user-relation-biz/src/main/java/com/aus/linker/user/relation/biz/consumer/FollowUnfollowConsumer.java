@@ -9,6 +9,8 @@ import com.aus.linker.user.relation.biz.domain.dataobject.FollowingDO;
 import com.aus.linker.user.relation.biz.domain.service.FansService;
 import com.aus.linker.user.relation.biz.domain.service.FollowingService;
 import com.aus.linker.user.relation.biz.model.dto.FollowUserMqDTO;
+import com.aus.linker.user.relation.biz.model.dto.UnfollowUserMqDTO;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.google.common.util.concurrent.RateLimiter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.common.message.Message;
@@ -65,7 +67,55 @@ public class FollowUnfollowConsumer implements RocketMQListener<Message> {
         if (Objects.equals(tags, MQConstants.TAG_FOLLOW)) { // 关注
             handleFollowTagMessage(bodyJsonStr);
         } else if (Objects.equals(tags, MQConstants.TAG_UNFOLLOW)) { // 取关
-            // TODO
+            handleUnfollowTagMessage(bodyJsonStr);
+        }
+
+    }
+
+    /**
+     * 取关
+     * @param bodyJsonStr
+     */
+    private void handleUnfollowTagMessage(String bodyJsonStr) {
+        // 将消息体 Json 字符串转为 DTO 对象
+        UnfollowUserMqDTO unfollowUserMqDTO = JsonUtil.parseObject(bodyJsonStr, UnfollowUserMqDTO.class);
+
+        // 判空
+        if (Objects.isNull(unfollowUserMqDTO)) return;
+
+        Long userId = unfollowUserMqDTO.getUserId();
+        Long unfollowUserId = unfollowUserMqDTO.getUnfollowUserId();
+        LocalDateTime createTime = unfollowUserMqDTO.getCreateTime();
+
+        // 编程式提交事务
+        boolean isSuccess = Boolean.TRUE.equals(transactionTemplate.execute(status -> {
+            try {
+                // 取关成功需要删除数据库2条记录
+                // 关注表
+                QueryWrapper<FollowingDO> wrapper = new QueryWrapper<>();
+                wrapper.eq("user_id", userId);
+                wrapper.eq("following_user_id", unfollowUserId);
+                boolean result = followingService.remove(wrapper);
+                if (result) {
+                    QueryWrapper<FansDO> wrapper1 = new QueryWrapper<>();
+                    wrapper1.eq("user_id", unfollowUserId);
+                    wrapper1.eq("fans_user_id", userId);
+                    result = fansService.remove(wrapper1);
+                }
+                return result;
+            } catch (Exception e) {
+                status.setRollbackOnly(); // 标记事务为回滚
+                log.error("", e);
+            }
+            return false;
+        }));
+
+        // 数据库删除成功后，更新 Redis，将自己从 Redis 的 ZSET 粉丝列表中移除
+        if (isSuccess) {
+            // 被取关用户的粉丝列表 Redis Key
+            String fansRedisKey = RedisKeyConstants.buildUserFansKey(unfollowUserId);
+            // 删除指定粉丝
+            redisTemplate.opsForZSet().remove(fansRedisKey, userId);
         }
 
     }

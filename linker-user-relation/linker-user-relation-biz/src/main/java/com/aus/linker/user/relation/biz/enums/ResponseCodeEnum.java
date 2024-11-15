@@ -17,6 +17,8 @@ public enum ResponseCodeEnum implements BaseExceptionInterface {
     FOLLOW_USER_NOT_EXISTS("RELATION-40400", "关注的用户不存在"),
     FOLLOWING_COUNT_LIMIT("RELATION-40301", "您关注的用户已达上限，请先取关部分用户"),
     ALREADY_FOLLOWED("RELATION-40302", "您已经关注了该用户"),
+    CANT_UNFOLLOW_YOUR_SELF("RELATION-40303", "无法取关自己"),
+    NOT_FOLLOWED("RELATION-40304", "您未关注对方，无法取关"),
     ;
 
     // 异常码
