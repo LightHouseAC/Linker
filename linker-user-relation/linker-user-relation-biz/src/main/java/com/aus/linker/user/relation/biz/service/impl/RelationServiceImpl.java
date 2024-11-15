@@ -45,7 +45,7 @@ public class RelationServiceImpl implements RelationService {
     private UserRpcService userRpcService;
 
     @Resource
-    private RedisTemplate<String, String> redisTemplate;
+    private RedisTemplate<String, Object> redisTemplate;
 
     @Resource
     private FollowingService followingService;
