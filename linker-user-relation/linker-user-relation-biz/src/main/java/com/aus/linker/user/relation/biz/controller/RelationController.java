@@ -1,7 +1,11 @@
 package com.aus.linker.user.relation.biz.controller;
 
 import com.aus.framework.biz.operationlog.aspect.ApiOperationLog;
+import com.aus.framework.common.response.PageResponse;
 import com.aus.framework.common.response.Response;
+import com.aus.linker.user.dto.resp.FindMultiUserByIdsRespDTO;
+import com.aus.linker.user.relation.biz.model.vo.FindFollowingListReqVO;
+import com.aus.linker.user.relation.biz.model.vo.FindFollowingListRespVO;
 import com.aus.linker.user.relation.biz.model.vo.FollowUserReqVO;
 import com.aus.linker.user.relation.biz.model.vo.UnfollowUserReqVO;
 import com.aus.linker.user.relation.biz.service.RelationService;
@@ -32,6 +36,12 @@ public class RelationController {
     @ApiOperationLog(description = "取关用户")
     public Response<?> unfollow(@Validated @RequestBody UnfollowUserReqVO unfollowUserReqVO) {
         return relationService.unfollow(unfollowUserReqVO);
+    }
+
+    @PostMapping("/following/list")
+    @ApiOperationLog(description = "查询用户关注列表")
+    public PageResponse<FindFollowingListRespVO> findFollowingList(@Validated @RequestBody FindFollowingListReqVO findFollowingListReqVO) {
+        return relationService.findFollowingList(findFollowingListReqVO);
     }
 
 }

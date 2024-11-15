@@ -4,9 +4,11 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.RandomUtil;
 import com.aus.framework.biz.context.holder.LoginUserContextHolder;
 import com.aus.framework.common.exception.BizException;
+import com.aus.framework.common.response.PageResponse;
 import com.aus.framework.common.response.Response;
 import com.aus.framework.common.utils.DateUtils;
 import com.aus.framework.common.utils.JsonUtil;
+import com.aus.linker.user.dto.resp.FindMultiUserByIdsRespDTO;
 import com.aus.linker.user.dto.resp.FindUserByIdRespDTO;
 import com.aus.linker.user.relation.biz.constant.MQConstants;
 import com.aus.linker.user.relation.biz.constant.RedisKeyConstants;
@@ -16,6 +18,8 @@ import com.aus.linker.user.relation.biz.enums.LuaResultEnum;
 import com.aus.linker.user.relation.biz.enums.ResponseCodeEnum;
 import com.aus.linker.user.relation.biz.model.dto.FollowUserMqDTO;
 import com.aus.linker.user.relation.biz.model.dto.UnfollowUserMqDTO;
+import com.aus.linker.user.relation.biz.model.vo.FindFollowingListReqVO;
+import com.aus.linker.user.relation.biz.model.vo.FindFollowingListRespVO;
 import com.aus.linker.user.relation.biz.model.vo.FollowUserReqVO;
 import com.aus.linker.user.relation.biz.model.vo.UnfollowUserReqVO;
 import com.aus.linker.user.relation.biz.rpc.UserRpcService;
@@ -38,6 +42,7 @@ import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 @Service
 @Slf4j
@@ -268,6 +273,73 @@ public class RelationServiceImpl implements RelationService {
         });
 
         return Response.success();
+    }
+
+    /**
+     * 查询关注列表
+     * @param findFollowingListReqVO
+     * @return
+     */
+    @Override
+    public PageResponse<FindFollowingListRespVO> findFollowingList(FindFollowingListReqVO findFollowingListReqVO) {
+        // 待查询用户 ID
+        Long userId = findFollowingListReqVO.getUserId();
+        // 页码
+        Integer pageNo = findFollowingListReqVO.getPageNo();
+
+        // 先从 Redis 中查询
+        String followingListRedisKey = RedisKeyConstants.buildUserFollowingKey(userId);
+
+        // 查询目标用户关注列表 ZSet 大小
+        long total = redisTemplate.opsForZSet().zCard(followingListRedisKey);
+
+        // 返参
+        List<FindFollowingListRespVO> findFollowingListRespVOS = null;
+
+        if (total > 0) { // 缓存中有数据
+            // 每页展示 10 条数据
+            long limit = 10;
+            // 计算一共多少页
+            long totalPage = PageResponse.getTotalPage(total, limit);
+
+            // 请求的页码超出了总页数
+            if (pageNo > totalPage) return PageResponse.success(null, pageNo, total);
+
+            // 准备从 Redis 中查询 ZSet 分页数据
+            // 每页 10 个元素，计算偏移量
+            long offset = (pageNo - 1) * limit;
+
+            // 使用 ZREVRANGEBYSCORE 命令按 score 降序获取元素，同时使用 LIMIT 子句实现分页
+            // 使用 Double.NEGATIVE_INFINITY 和 Double.POSITIVE_INFINITY 作为分数范围 (-∞ ~ ＋∞)
+            // 关注列表最多有 1000 个元素，可以确保获取到所有元素
+            Set<Object> followingUserIdsSet = redisTemplate.opsForZSet()
+                    .reverseRangeByScore(followingListRedisKey, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, offset, limit);
+
+            if (CollUtil.isNotEmpty(followingUserIdsSet)) {
+                // 提取所有用户 ID
+                List<Long> userIds = followingUserIdsSet.stream().map(object -> Long.valueOf(object.toString())).toList();
+
+                // RPC: 批量查询用户信息
+                List<FindMultiUserByIdsRespDTO> findMultiUserByIdsRespDTOS = userRpcService.findByIds(userIds);
+
+                // 若不为空，DTO 转 VO
+                if (CollUtil.isNotEmpty(findMultiUserByIdsRespDTOS)) {
+                    findFollowingListRespVOS = findMultiUserByIdsRespDTOS.stream()
+                            .map(dto -> FindFollowingListRespVO.builder()
+                                    .userId(dto.getId())
+                                    .avatar(dto.getAvatar())
+                                    .nickname(dto.getNickName())
+                                    .introduction(dto.getIntroduction())
+                                    .build())
+                            .toList();
+                }
+            }
+        } else {
+            // TODO: 若 Redis 中没有数据，则从数据库中查询
+
+            // TODO: 异步将关注列表全量同步到 Redis
+        }
+        return PageResponse.success(findFollowingListRespVOS, pageNo, total);
     }
 
     /**
