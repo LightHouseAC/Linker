@@ -2,6 +2,7 @@ package com.aus.linker.count.biz.domain.mapper;
 
 import com.aus.linker.count.biz.domain.dataobject.UserCountDO;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import org.apache.ibatis.annotations.Param;
 
 /**
 * @author lance.yang
@@ -10,6 +11,14 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 * @Entity com.aus.linker.count.biz.domain.dataobject.UserCountDO
 */
 public interface UserCountDOMapper extends BaseMapper<UserCountDO> {
+
+    /**
+     * 添加或更新粉丝总数
+     * @param count
+     * @param userId
+     * @return
+     */
+    int insertOrUpdateFansTotalByUserId(@Param("count") Integer count, @Param("userId") Long userId);
 
 }
 

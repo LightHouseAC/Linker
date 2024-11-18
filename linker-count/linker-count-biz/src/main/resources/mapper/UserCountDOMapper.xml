@@ -19,4 +19,11 @@
         following_total,note_total,like_total,
         collect_total
     </sql>
+
+    <insert id="insertOrUpdateFansTotalByUserId" parameterType="map">
+        INSERT INTO t_user_count (user_id, fans_total)
+        VALUES (#{userId}, #{count})
+            ON DUPLICATE KEY UPDATE fans_total = fans_total + (#{count});
+    </insert>
+
 </mapper>
