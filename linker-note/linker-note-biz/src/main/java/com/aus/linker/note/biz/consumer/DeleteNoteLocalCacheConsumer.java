@@ -12,7 +12,7 @@ import javax.annotation.Resource;
 
 @Component
 @Slf4j
-@RocketMQMessageListener(consumerGroup = "linker_group", // group
+@RocketMQMessageListener(consumerGroup = "linker_group_" + MQConstants.TOPIC_DELETE_NOTE_LOCAL_CACHE, // group
         topic = MQConstants.TOPIC_DELETE_NOTE_LOCAL_CACHE, // 消费主题 Topic
         messageModel = MessageModel.BROADCASTING // 广播模式
 )

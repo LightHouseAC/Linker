@@ -38,6 +38,8 @@
     <module>linker-user-relation/linker-user-relation-api</module>
     <module>linker-user-relation/linker-user-relation-api</module>
     <module>linker-user-relation/linker-user-relation-biz</module>
+    <module>linker-count</module>
+    <module>linker-count</module>
   </modules>
 
   <properties>
