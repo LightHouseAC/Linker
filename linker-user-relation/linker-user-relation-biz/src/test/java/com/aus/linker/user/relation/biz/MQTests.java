@@ -2,6 +2,8 @@ package com.aus.linker.user.relation.biz;
 
 import com.aus.framework.common.utils.JsonUtil;
 import com.aus.linker.user.relation.biz.constant.MQConstants;
+import com.aus.linker.user.relation.biz.enums.FollowUnfollowTypeEnum;
+import com.aus.linker.user.relation.biz.model.dto.CountFollowUnfollowMqDTO;
 import com.aus.linker.user.relation.biz.model.dto.FollowUserMqDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.producer.SendCallback;
@@ -55,6 +57,36 @@ public class MQTests {
                 }
             });
 
+        }
+    }
+
+    /**
+     * 测试：发送计数 MQ 消息，统计粉丝数
+     */
+    @Test
+    void testSendCountFollowUnfollowMQ() {
+        // 循环发送 3200 条 MQ
+        for (long i = 0; i < 3200; i++) {
+            // 构建消息体 DTO
+            CountFollowUnfollowMqDTO countFollowUnfollowMqDTO = CountFollowUnfollowMqDTO.builder()
+                    .userId(i + 1)
+                    .targetUserId(26L)
+                    .type(FollowUnfollowTypeEnum.FOLLOW.getCode())
+                    .build();
+
+            Message<String> message = MessageBuilder.withPayload(JsonUtil.toJsonString(countFollowUnfollowMqDTO)).build();
+
+            rocketMQTemplate.asyncSend(MQConstants.TOPIC_COUNT_FANS, message, new SendCallback() {
+                @Override
+                public void onSuccess(SendResult sendResult) {
+                    log.info("==> 【计数服务：粉丝数】MQ 发送成功，SendResult: {}", sendResult);
+                }
+
+                @Override
+                public void onException(Throwable throwable) {
+                    log.error("==> 【计数服务：粉丝数】MQ 发送异常: ", throwable);
+                }
+            });
         }
     }
 
