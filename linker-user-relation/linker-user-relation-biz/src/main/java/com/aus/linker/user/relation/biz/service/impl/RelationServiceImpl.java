@@ -25,6 +25,7 @@ import com.aus.linker.user.relation.biz.model.vo.UnfollowUserReqVO;
 import com.aus.linker.user.relation.biz.rpc.UserRpcService;
 import com.aus.linker.user.relation.biz.service.RelationService;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.producer.SendCallback;
 import org.apache.rocketmq.client.producer.SendResult;
@@ -34,6 +35,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.scripting.support.ResourceScriptSource;
 import org.springframework.stereotype.Service;
 
@@ -59,6 +61,9 @@ public class RelationServiceImpl implements RelationService {
 
     @Resource
     private RocketMQTemplate rocketMQTemplate;
+
+    @Resource(name = "taskExecutor")
+    private ThreadPoolTaskExecutor threadPoolTaskExecutor;
 
     /**
      * 关注用户
@@ -296,9 +301,10 @@ public class RelationServiceImpl implements RelationService {
         // 返参
         List<FindFollowingListRespVO> findFollowingListRespVOS = null;
 
+        // 每页展示 10 条数据
+        long limit = 10;
+
         if (total > 0) { // 缓存中有数据
-            // 每页展示 10 条数据
-            long limit = 10;
             // 计算一共多少页
             long totalPage = PageResponse.getTotalPage(total, limit);
 
@@ -335,9 +341,34 @@ public class RelationServiceImpl implements RelationService {
                 }
             }
         } else {
-            // TODO: 若 Redis 中没有数据，则从数据库中查询
+            // 若 Redis 中没有数据，则从数据库中查询
+            // 先查询记录总量
+            QueryWrapper<FollowingDO> wrapper = new QueryWrapper<>();
+            wrapper.eq("user_id", userId);
+            wrapper.orderBy(true, false, "create_time");
+            long count = followingService.count(wrapper);
 
-            // TODO: 异步将关注列表全量同步到 Redis
+            // 计算一共多少页
+            long totalPage = PageResponse.getTotalPage(count, limit);
+
+            // 请求的页码超出了总页数
+            if (pageNo > totalPage) return PageResponse.success(null, pageNo, count);
+
+            // 分页查询
+            Page<FollowingDO> page = new Page<>(pageNo, limit);
+            List<FollowingDO> followingDOS = followingService.list(page, wrapper);
+
+            // 若记录不为空
+            if (CollUtil.isNotEmpty(followingDOS)) {
+                // 提取所有关注用户 ID 到集合中
+                List<Long> userIds = followingDOS.stream().map(FollowingDO::getFollowingUserId).toList();
+
+                // RPC: 调用用户服务，将 DTO 转为 VO
+                findFollowingListRespVOS = rpcUserServiceAndDTO2VO(userIds, findFollowingListRespVOS);
+
+                // 异步将关注列表全量同步到 Redis
+                threadPoolTaskExecutor.submit(() -> syncFollowingList2Redis(userId));
+            }
         }
         return PageResponse.success(findFollowingListRespVOS, pageNo, total);
     }
@@ -379,4 +410,53 @@ public class RelationServiceImpl implements RelationService {
             case ALREADY_FOLLOWED -> throw new BizException(ResponseCodeEnum.ALREADY_FOLLOWED);
         }
     }
+
+    /**
+     * RPC: 调用用户服务，将 DTO 转为 VO
+     * @param userIds
+     * @param findFollowingListRespVOS
+     * @return
+     */
+    private List<FindFollowingListRespVO> rpcUserServiceAndDTO2VO(List<Long> userIds, List<FindFollowingListRespVO> findFollowingListRespVOS) {
+        // RPC: 批量查询用户信息
+        List<FindMultiUserByIdsRespDTO> findMultiUserByIdsRespDTOS = userRpcService.findByIds(userIds);
+
+        // 若不为空，则 DTO 转为 VO
+        if (CollUtil.isNotEmpty(findMultiUserByIdsRespDTOS)) {
+            findFollowingListRespVOS = findMultiUserByIdsRespDTOS.stream()
+                    .map(dto -> FindFollowingListRespVO.builder()
+                            .userId(dto.getId())
+                            .avatar(dto.getAvatar())
+                            .nickname(dto.getNickName())
+                            .introduction(dto.getIntroduction())
+                            .build())
+                    .toList();
+        }
+        return findFollowingListRespVOS;
+    }
+
+    /**
+     * 全量同步关注列表到 Redis 中
+     * @param userId
+     */
+    private void syncFollowingList2Redis(Long userId) {
+        // 查询全量关注用户列表（上限 1k）
+        long limit = 1000;
+        QueryWrapper<FollowingDO> wrapper = new QueryWrapper<>();
+        wrapper.eq("user_id", userId);
+        Page<FollowingDO> page = new Page<>(1, limit);
+        List<FollowingDO> followingDOS = followingService.list(page, wrapper);
+        if (CollUtil.isNotEmpty(followingDOS)) {
+            // 用户关注列表 Redis Key
+            String followingListRedisKey = RedisKeyConstants.buildUserFollowingKey(userId);
+            long expireSeconds = 60 * 60 * 24 + RandomUtil.randomInt(60 * 60 * 24);
+            Object[] luaArgs = buildLuaArgs(followingDOS, expireSeconds);
+
+            DefaultRedisScript<Long> script = new DefaultRedisScript<>();
+            script.setScriptSource(new ResourceScriptSource(new ClassPathResource("/lua/follow_batch_add_and_expire.lua")));
+            script.setResultType(Long.class);
+            redisTemplate.execute(script, Collections.singletonList(followingListRedisKey), luaArgs);
+        }
+    }
+
 }
