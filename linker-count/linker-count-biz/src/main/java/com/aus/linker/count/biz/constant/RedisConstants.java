@@ -8,7 +8,7 @@ public class RedisConstants {
     private static final String COUNT_USER_KEY_PREFIX = "count:user:";
 
     /**
-     * Hash Filed: 粉丝总数
+     * Hash Field: 粉丝总数
      */
     public static final String FILED_FANS_TOTAL = "fansTotal";
 
@@ -20,5 +20,10 @@ public class RedisConstants {
     public static String buildCountUserKey(Long userId) {
         return COUNT_USER_KEY_PREFIX + userId;
     }
+
+    /**
+     * Hash Field: 关注总数
+     */
+    public static final String FIELD_FOLLOWING_TOTAL = "followingTotal";
 
 }
