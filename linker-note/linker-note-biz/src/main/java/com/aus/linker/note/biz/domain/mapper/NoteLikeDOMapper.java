@@ -22,6 +22,13 @@ public interface NoteLikeDOMapper extends BaseMapper<NoteLikeDO> {
 
     List<NoteLikeDO> selectLikedByUserIdAndLimit(@Param("userId") Long userId, @Param("limit") int limit);
 
+    /**
+     * 新增笔记点赞记录，若已存在，则更新记录
+     * @param noteLikeDO
+     * @return
+     */
+    int insertOrUpdate(NoteLikeDO noteLikeDO);
+
 }
 
 

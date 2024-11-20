@@ -17,6 +17,13 @@
         create_time,status
     </sql>
 
+    <insert id="insertOrUpdate" parameterType="com.aus.linker.note.biz.domain.dataobject.NoteLikeDO">
+        INSERT INTO t_note_like (user_id, note_id, create_time, status)
+        VALUES (#{userId}, #{noteId}, #{createTime}, #{status})
+            ON DUPLICATE KEY UPDATE
+                 create_time = #{createTime}, status = #{status}
+    </insert>
+
     <select id="selectByUserId" resultMap="BaseResultMap" parameterType="map">
         select note_id from t_note_like
         where user_id = #{userId} and status = 1

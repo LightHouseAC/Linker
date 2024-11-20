@@ -16,6 +16,7 @@ import com.aus.linker.note.biz.domain.mapper.NoteLikeDOMapper;
 import com.aus.linker.note.biz.domain.mapper.TopicDOMapper;
 import com.aus.linker.note.biz.domain.service.NoteService;
 import com.aus.linker.note.biz.enums.*;
+import com.aus.linker.note.biz.model.dto.LikeUnlikeNoteMqDTO;
 import com.aus.linker.note.biz.model.vo.*;
 import com.aus.linker.note.biz.rpc.DistributedIdGeneratorRpcService;
 import com.aus.linker.note.biz.rpc.KeyValueRpcService;
@@ -30,10 +31,14 @@ import com.google.common.collect.Lists;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.rocketmq.client.producer.SendCallback;
+import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.spring.core.RocketMQTemplate;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
+import org.springframework.messaging.Message;
+import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.scripting.support.ResourceScriptSource;
 import org.springframework.stereotype.Service;
@@ -687,6 +692,33 @@ public class NoteServiceImpl extends ServiceImpl<NoteDOMapper, NoteDO>
         }
 
         // 4. 发送 MQ 消息，将点赞数据落库
+        // 构建消息体 DTO
+        LikeUnlikeNoteMqDTO likeUnlikeNoteMqDTO = LikeUnlikeNoteMqDTO.builder()
+                .userId(userId)
+                .noteId(noteId)
+                .type(LikeUnlikeNoteTypeEnum.LIKE.getCode())
+                .createTime(now)
+                .build();
+
+        // 构建消息对象，将 DTO 转成 Json 字符串设置到消息体中
+        Message<String> message = MessageBuilder.withPayload(JsonUtil.toJsonString(likeUnlikeNoteMqDTO)).build();
+
+        // 通过冒号连接，可以让 MQ 发送给 Topic 时，携带 Tag 信息
+        String destination = MQConstants.TOPIC_LIKE_OR_UNLIKE + ":" + MQConstants.TAG_LIKE;
+
+        String hashKey = String.valueOf(userId);
+
+        rocketMQTemplate.asyncSendOrderly(destination, message, hashKey, new SendCallback() {
+            @Override
+            public void onSuccess(SendResult sendResult) {
+                log.info("==> 【笔记点赞】MQ 消息发送成功, SendResult: {}", sendResult);
+            }
+
+            @Override
+            public void onException(Throwable throwable) {
+                log.info("==> 【笔记点赞】MQ 消息发送异常：", throwable);
+            }
+        });
 
         return Response.success();
     }
