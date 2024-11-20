@@ -1,4 +1,4 @@
-package com.aus.linker.count.biz.domain.dataobject;
+package com.aus.linker.note.biz.domain.dataobject;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
@@ -13,15 +13,15 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * 笔记收藏表
- * @TableName t_note_collection
+ * 笔记点赞表
+ * @TableName t_note_like
  */
-@TableName(value ="t_note_collection")
+@TableName(value ="t_note_like")
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class NoteCollectionDO implements Serializable {
+public class NoteLikeDO implements Serializable {
     /**
      * 主键ID
      */
@@ -44,7 +44,7 @@ public class NoteCollectionDO implements Serializable {
     private LocalDateTime createTime;
 
     /**
-     * 收藏状态(0：取消收藏 1：收藏)
+     * 点赞状态(0：取消点赞 1：点赞)
      */
     private Integer status;
 
@@ -62,7 +62,7 @@ public class NoteCollectionDO implements Serializable {
         if (getClass() != that.getClass()) {
             return false;
         }
-        NoteCollectionDO other = (NoteCollectionDO) that;
+        NoteLikeDO other = (NoteLikeDO) that;
         return (this.getId() == null ? other.getId() == null : this.getId().equals(other.getId()))
             && (this.getUserId() == null ? other.getUserId() == null : this.getUserId().equals(other.getUserId()))
             && (this.getNoteId() == null ? other.getNoteId() == null : this.getNoteId().equals(other.getNoteId()))

@@ -20,7 +20,8 @@ public enum ResponseCodeEnum implements BaseExceptionInterface {
     NOTE_NOT_FOUND("NOTE-40400", "笔记不存在"),
     TOPIC_NOT_FOUND("NOTE-40401", "话题不存在"),
     NOTE_PRIVATE("NOTE-40100", "作者已将笔记设为仅自己可见"),
-    NOTE_CANT_OPERATE("NOTE-40101", "您无法操作该笔记")
+    NOTE_CANT_OPERATE("NOTE-40101", "您无法操作该笔记"),
+    NOTE_ALREADY_LIKED("NOTE-40300", "您已经点赞过该笔记")
     ;
 
     // 异常码

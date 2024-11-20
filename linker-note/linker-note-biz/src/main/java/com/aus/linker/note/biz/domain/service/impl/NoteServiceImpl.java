@@ -9,13 +9,12 @@ import com.aus.framework.common.utils.JsonUtil;
 import com.aus.linker.note.biz.constant.MQConstants;
 import com.aus.linker.note.biz.constant.RedisKeyConstants;
 import com.aus.linker.note.biz.domain.dataobject.NoteDO;
+import com.aus.linker.note.biz.domain.dataobject.NoteLikeDO;
 import com.aus.linker.note.biz.domain.mapper.NoteDOMapper;
+import com.aus.linker.note.biz.domain.mapper.NoteLikeDOMapper;
 import com.aus.linker.note.biz.domain.mapper.TopicDOMapper;
 import com.aus.linker.note.biz.domain.service.NoteService;
-import com.aus.linker.note.biz.enums.NoteStatusEnum;
-import com.aus.linker.note.biz.enums.NoteTypeEnum;
-import com.aus.linker.note.biz.enums.NoteVisibleEnum;
-import com.aus.linker.note.biz.enums.ResponseCodeEnum;
+import com.aus.linker.note.biz.enums.*;
 import com.aus.linker.note.biz.model.vo.*;
 import com.aus.linker.note.biz.rpc.DistributedIdGeneratorRpcService;
 import com.aus.linker.note.biz.rpc.KeyValueRpcService;
@@ -26,17 +25,23 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.spring.core.RocketMQTemplate;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import org.springframework.scripting.support.ResourceScriptSource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -79,6 +84,9 @@ public class NoteServiceImpl extends ServiceImpl<NoteDOMapper, NoteDO>
 
     @Resource
     private RocketMQTemplate rocketMQTemplate;
+
+    @Resource
+    private NoteLikeDOMapper noteLikeDOMapper;
 
     /**
      * 笔记发布
@@ -575,6 +583,136 @@ public class NoteServiceImpl extends ServiceImpl<NoteDOMapper, NoteDO>
         log.info("===> MQ: 删除本地缓存通知发送成功");
 
         return Response.success();
+    }
+
+    /**
+     * 点赞笔记
+     * @param likeNoteReqVO
+     * @return
+     */
+    @Override
+    public Response<?> likeNote(LikeNoteReqVO likeNoteReqVO) {
+
+        // 笔记 ID
+        Long noteId = likeNoteReqVO.getId();
+
+        // 1. 校验被点赞的笔记是否存在
+        checkNoteIsExists(noteId);
+
+        // 2. 判断目标笔记，是否已经点赞过
+        // 当前登录用户 ID
+        Long userId = LoginUserContextHolder.getUserId();
+
+        // 布隆过滤器 Key
+        String bloomUserNoteLikeListKey = RedisKeyConstants.buildBloomUserNoteLikeListKey(userId);
+
+        DefaultRedisScript<Long> script = new DefaultRedisScript<>();
+        script.setScriptSource(new ResourceScriptSource(new ClassPathResource("/lua/bloom_note_like_check.lua")));
+        script.setResultType(Long.class);
+
+        // 执行脚本拿到返回值
+        Long result = redisTemplate.execute(script, Collections.singletonList(bloomUserNoteLikeListKey), userId);
+
+        NoteLikeLuaResultEnum noteLikeLuaResultEnum = NoteLikeLuaResultEnum.valueOf(result);
+
+        switch (noteLikeLuaResultEnum) {
+            // Redis 中布隆过滤器不存在
+            case BLOOM_NOT_EXISTS -> {
+                // 从数据库中校验笔记是否被点赞，并异步初始化布隆过滤器设置，设置过期时间
+                int count = noteLikeDOMapper.selectCountByUserIdAndNoteId(userId, noteId);
+
+                // 保底 1 天 + 随机秒数
+                long expireSeconds = 60 * 60 * 24 + RandomUtil.randomInt(60 * 60 * 24);
+
+                // 目标笔记已经被点赞
+                if (count > 0) {
+                    // 异步初始化布隆过滤器
+                    asyncBatchAddNoteLike2BloomAndExpire(userId, expireSeconds, bloomUserNoteLikeListKey);
+                    throw new BizException(ResponseCodeEnum.NOTE_ALREADY_LIKED);
+                }
+
+                // 若数据库中也没有点赞记录，说明该用户还未点赞过任何笔记
+                script.setScriptSource(new ResourceScriptSource(new ClassPathResource("/lua/bloom_add_note_like_and_expire.lua")));
+                script.setResultType(Long.class);
+                redisTemplate.execute(script, Collections.singletonList(bloomUserNoteLikeListKey), noteId, expireSeconds);
+            }
+            // 目标笔记已经被点赞
+            case NOTE_LIKED -> throw new BizException(ResponseCodeEnum.NOTE_ALREADY_LIKED);
+        }
+
+        // 3. 更新用户 ZSET 列表
+
+        // 4. 发送 MQ 消息，将点赞数据落库
+
+        return Response.success();
+    }
+
+    /**
+     * 异步初始化布隆过滤器
+     * @param userId
+     * @param expireSeconds
+     * @param bloomUserNoteLikeListKey
+     */
+    private void asyncBatchAddNoteLike2BloomAndExpire(Long userId, long expireSeconds, String bloomUserNoteLikeListKey) {
+        threadPoolTaskExecutor.submit(() -> {
+           try {
+               // 异步全量同步一下，并设置过期时间
+               List<NoteLikeDO> noteLikeDOS = noteLikeDOMapper.selectByUserId(userId);
+
+               if (CollUtil.isNotEmpty(noteLikeDOS)) {
+                   DefaultRedisScript<Long> script = new DefaultRedisScript<>();
+                   script.setScriptSource(new ResourceScriptSource(new ClassPathResource("/lua/bloom_batch_add_note_like_and_expire.lua")));
+                   script.setResultType(Long.class);
+
+                   List<Object> luaArgs = Lists.newArrayList();
+                   noteLikeDOS.forEach(noteLikeDO -> luaArgs.add(noteLikeDO.getNoteId())); // 将每个点赞的笔记 ID 传入
+                   luaArgs.add(expireSeconds); // 最后一个参数是过期时间(s)
+                   redisTemplate.execute(script, Collections.singletonList(bloomUserNoteLikeListKey), luaArgs.toArray());
+               }
+           } catch (Exception e) {
+               log.error("## 异步初始化布隆过滤器异常：", e);
+           }
+        });
+    }
+
+    /**
+     * 校验笔记是否存在
+     * @param noteId
+     */
+    private void checkNoteIsExists(Long noteId) {
+        // 先从本地缓存校验
+        String findNoteDetailRespVOStrLocalCache = LOCAL_CACHE.getIfPresent(noteId);
+        // 解析 Json 字符串为 VO 对象
+        FindNoteDetailRespVO findNoteDetailRespVO = JsonUtil.parseObject(findNoteDetailRespVOStrLocalCache, FindNoteDetailRespVO.class);
+
+        // 若本地缓存没有
+        if (Objects.isNull(findNoteDetailRespVO)) {
+            // 再从 Redis 中校验
+            String noteDetailRedisKey = RedisKeyConstants.buildNoteDetailKey(noteId);
+
+            String noteDetailJson = redisTemplate.opsForValue().get(noteDetailRedisKey);
+
+            // 解析 Json 字符串 为 VO 对象
+            findNoteDetailRespVO = JsonUtil.parseObject(noteDetailJson, FindNoteDetailRespVO.class);
+
+            // 都不存在，查库校验
+            if (Objects.isNull(findNoteDetailRespVO)) {
+                QueryWrapper<NoteDO> wrapper = new QueryWrapper<>();
+                wrapper.eq("id", noteId);
+                wrapper.eq("status", NoteStatusEnum.NORMAL.getCode());
+                long count = count(wrapper);
+                // 若数据库中也不存在，抛出业务异常
+                if (count == 0) {
+                    throw new BizException(ResponseCodeEnum.NOTE_NOT_FOUND);
+                }
+
+                // 若数据库中存在，异步更新缓存
+                threadPoolTaskExecutor.submit(() -> {
+                    FindNoteDetailReqVO findNoteDetailReqVO = FindNoteDetailReqVO.builder().id(noteId).build();
+                    findNoteDetail(findNoteDetailReqVO); // 查询笔记（自动写入缓存）
+                });
+            }
+        }
     }
 
     /**

@@ -1,6 +1,6 @@
-package com.aus.linker.count.biz.domain.service;
+package com.aus.linker.note.biz.domain.service;
 
-import com.aus.linker.count.biz.domain.dataobject.NoteCollectionDO;
+import com.aus.linker.note.biz.domain.dataobject.NoteCollectionDO;
 import com.baomidou.mybatisplus.extension.service.IService;
 
 /**

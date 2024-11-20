@@ -2,9 +2,9 @@
 <!DOCTYPE mapper
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.aus.linker.count.biz.domain.mapper.NoteLikeDOMapper">
+<mapper namespace="com.aus.linker.note.biz.domain.mapper.NoteLikeDOMapper">
 
-    <resultMap id="BaseResultMap" type="com.aus.linker.count.biz.domain.dataobject.NoteLikeDO">
+    <resultMap id="BaseResultMap" type="com.aus.linker.note.biz.domain.dataobject.NoteLikeDO">
             <id property="id" column="id" jdbcType="BIGINT"/>
             <result property="userId" column="user_id" jdbcType="BIGINT"/>
             <result property="noteId" column="note_id" jdbcType="BIGINT"/>
@@ -16,4 +16,14 @@
         id,user_id,note_id,
         create_time,status
     </sql>
+
+    <select id="selectByUserId" resultMap="BaseResultMap" parameterType="map">
+        select note_id from t_note_like
+        where user_id = #{userId} and status = 1
+    </select>
+
+    <select id="selectCountByUserIdAndNoteId" resultType="int" parameterType="map">
+        select count(1) from t_note_like where user_id = #{userId} and note_id = #{noteId} and status = 1 limit 1
+    </select>
+
 </mapper>

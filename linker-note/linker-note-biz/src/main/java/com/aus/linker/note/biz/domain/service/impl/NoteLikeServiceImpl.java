@@ -1,9 +1,9 @@
-package com.aus.linker.count.biz.domain.service.impl;
+package com.aus.linker.note.biz.domain.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.aus.linker.count.biz.domain.dataobject.NoteLikeDO;
-import com.aus.linker.count.biz.domain.service.NoteLikeService;
-import com.aus.linker.count.biz.domain.mapper.NoteLikeDOMapper;
+import com.aus.linker.note.biz.domain.dataobject.NoteLikeDO;
+import com.aus.linker.note.biz.domain.service.NoteLikeService;
+import com.aus.linker.note.biz.domain.mapper.NoteLikeDOMapper;
 import org.springframework.stereotype.Service;
 
 /**
