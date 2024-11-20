@@ -26,4 +26,13 @@
         select count(1) from t_note_like where user_id = #{userId} and note_id = #{noteId} and status = 1 limit 1
     </select>
 
+    <select id="selectNoteIsLiked" resultType="int" parameterType="map">
+        select count(1) from t_note_like where user_id = #{userId} and note_id = #{noteId} and status = 1 limit 1
+    </select>
+
+    <select id="selectLikedByUserIdAndLimit" resultType="com.aus.linker.note.biz.domain.dataobject.NoteLikeDO">
+        select note_id, create_time from t_note_like
+        where user_id = #{userId} and status = 1 order by create_time desc limit #{limit}
+    </select>
+
 </mapper>
