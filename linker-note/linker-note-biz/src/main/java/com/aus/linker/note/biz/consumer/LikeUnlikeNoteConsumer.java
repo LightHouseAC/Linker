@@ -85,7 +85,20 @@ public class LikeUnlikeNoteConsumer implements RocketMQListener<Message> {
 
         if (count == 0) return;
         // 更新数据库成功后，发送计数 MQ
+        org.springframework.messaging.Message<String> message = MessageBuilder.withPayload(bodyJsonStr).build();
 
+        rocketMQTemplate.asyncSend(MQConstants.TOPIC_COUNT_NOTE_LIKE, message, new SendCallback() {
+
+            @Override
+            public void onSuccess(SendResult sendResult) {
+                log.info("==> 【计数：笔记点赞】 MQ 消息发送成功, SendResult: {}", sendResult);
+            }
+
+            @Override
+            public void onException(Throwable throwable) {
+                log.info("==> 【计数：笔记点赞】 MQ 消息发送异常: ", throwable);
+            }
+        });
 
     }
 
