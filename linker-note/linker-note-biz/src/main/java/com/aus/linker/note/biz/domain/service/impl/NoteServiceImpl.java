@@ -727,6 +727,72 @@ public class NoteServiceImpl extends ServiceImpl<NoteDOMapper, NoteDO>
         return Response.success();
     }
 
+    @Override
+    public Response<?> unlikeNote(UnlikeNoteReqVO unlikeNoteReqVO) {
+        Long noteId = unlikeNoteReqVO.getId();
+
+        checkNoteIsExists(noteId);
+
+        Long userId = LoginUserContextHolder.getUserId();
+
+        String bloomUserNoteLikeListKey = RedisKeyConstants.buildBloomUserNoteLikeListKey(userId);
+
+        DefaultRedisScript<Long> script = new DefaultRedisScript<>();
+        script.setScriptSource(new ResourceScriptSource(new ClassPathResource("/lua/batch_note_unlike_check.lua")));
+        script.setResultType(Long.class);
+
+        Long result = redisTemplate.execute(script, Collections.singletonList(bloomUserNoteLikeListKey), noteId);
+
+        NoteUnlikeLuaResultEnum noteUnlikeLuaResultEnum = NoteUnlikeLuaResultEnum.valueOf(result);
+
+        switch (noteUnlikeLuaResultEnum) {
+            // 布隆过滤器不存在
+            case NOT_EXISTS -> {
+                // 异步初始化布隆过滤器
+                threadPoolTaskExecutor.submit(() -> {
+                   long expireSeconds = 60 * 60 * 24 + RandomUtil.randomInt(60 * 60 * 24);
+                   batchAddNoteLike2BloomAndExpire(userId, expireSeconds, bloomUserNoteLikeListKey);
+                });
+                int count = noteLikeDOMapper.selectNoteIsLiked(userId, noteId);
+                // 未点赞无法进行取消点赞操作
+                if (count == 0) throw new BizException(ResponseCodeEnum.NOTE_NOT_LIKED);
+            }
+            // 布隆过滤器校验笔记未被点赞过（不存在误判）
+            case NOTE_NOT_LIKED -> throw new BizException(ResponseCodeEnum.NOTE_NOT_LIKED);
+        }
+
+        // 已点赞 => 删除 ZSet 中已点赞的笔记 ID
+        String userNoteLikeZSetKey = RedisKeyConstants.buildUserNoteLikeZSetKey(userId);
+        redisTemplate.opsForZSet().remove(userNoteLikeZSetKey, noteId);
+
+        // 发送消息到 MQ，数据更新落库
+        LikeUnlikeNoteMqDTO likeUnlikeNoteMqDTO = LikeUnlikeNoteMqDTO.builder()
+                .userId(userId)
+                .noteId(noteId)
+                .type(LikeUnlikeNoteTypeEnum.UNLIKE.getCode())
+                .createTime(LocalDateTime.now())
+                .build();
+
+        Message<String> message = MessageBuilder.withPayload(JsonUtil.toJsonString(likeUnlikeNoteMqDTO)).build();
+
+        String destination = MQConstants.TOPIC_LIKE_OR_UNLIKE + ":" + MQConstants.TAG_UNLIKE;
+        String hashKey = String.valueOf(userId);
+
+        rocketMQTemplate.asyncSendOrderly(destination, message, hashKey, new SendCallback() {
+            @Override
+            public void onSuccess(SendResult sendResult) {
+                log.info("==> 【笔记取消点赞】 MQ 消息发送成功, SendResult: {}", sendResult);
+            }
+
+            @Override
+            public void onException(Throwable throwable) {
+                log.info("==> 【笔记取消点赞】 MQ 消息发送异常：", throwable);
+            }
+        });
+
+        return Response.success();
+    }
+
     /**
      * 异步初始化用户点赞笔记 ZSet
      * @param userId

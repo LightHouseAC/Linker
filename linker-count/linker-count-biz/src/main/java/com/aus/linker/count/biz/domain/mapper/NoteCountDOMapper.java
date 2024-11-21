@@ -2,6 +2,7 @@ package com.aus.linker.count.biz.domain.mapper;
 
 import com.aus.linker.count.biz.domain.dataobject.NoteCountDO;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import org.apache.ibatis.annotations.Param;
 
 /**
 * @author lance.yang
@@ -10,6 +11,14 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 * @Entity com.aus.linker.count.biz.domain.dataobject.NoteCountDO
 */
 public interface NoteCountDOMapper extends BaseMapper<NoteCountDO> {
+
+    /**
+     * 添加笔记计数记录或更新笔记点赞数
+     * @param count
+     * @param noteId
+     * @return
+     */
+    int insertOrUpdateLikeTotalByNoteId(@Param("count") Integer count, @Param("noteId") Long noteId);
 
 }
 
