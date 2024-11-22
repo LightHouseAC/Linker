@@ -60,6 +60,25 @@ public class CollectUnCollectNoteConsumer implements RocketMQListener<Message> {
      * @param bodyJsonStr
      */
     private void handleUnCollectNoteTagMessage(String bodyJsonStr) {
+        CollectUnCollectNoteMqDTO collectUnCollectNoteMqDTO = JsonUtil.parseObject(bodyJsonStr, CollectUnCollectNoteMqDTO.class);
+
+        if (Objects.isNull(collectUnCollectNoteMqDTO)) return;
+
+        Long userId = collectUnCollectNoteMqDTO.getUserId();
+        Long noteId = collectUnCollectNoteMqDTO.getNoteId();
+        Integer type = collectUnCollectNoteMqDTO.getType();
+        LocalDateTime createTime = collectUnCollectNoteMqDTO.getCreateTime();
+
+        NoteCollectionDO noteCollectionDO = NoteCollectionDO.builder()
+                .userId(userId)
+                .noteId(noteId)
+                .status(type)
+                .createTime(createTime)
+                .build();
+
+        int count = noteCollectionDOMapper.update2UnCollectByUserIdAndNoteId(noteCollectionDO);
+
+        // TODO: 发送计数 MQ
 
     }
 
