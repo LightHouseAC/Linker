@@ -2,6 +2,9 @@ package com.aus.linker.note.biz.domain.mapper;
 
 import com.aus.linker.note.biz.domain.dataobject.NoteCollectionDO;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 /**
 * @author lance.yang
@@ -10,6 +13,16 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 * @Entity com.aus.linker.note.biz.domain.dataobject.NoteCollectionDO
 */
 public interface NoteCollectionDOMapper extends BaseMapper<NoteCollectionDO> {
+
+    /**
+     * 查询笔记是否被收藏
+     * @param userId
+     * @param noteId
+     * @return
+     */
+    int selectCountByUserIdAndNoteId(@Param("userId") Long userId, @Param("noteId") Long noteId);
+
+    List<NoteCollectionDO> selectByUserId(@Param("userId") Long userId);
 
 }
 
