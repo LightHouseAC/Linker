@@ -42,4 +42,9 @@ public interface MQConstants {
      */
     String TAG_UN_COLLECT = "UnCollect";
 
+    /**
+     * Topic: 笔记收藏数计数
+     */
+    String TOPIC_COUNT_NOTE_COLLECT = "CountNoteCollectTopic";
+
 }
