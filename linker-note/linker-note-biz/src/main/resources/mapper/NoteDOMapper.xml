@@ -29,4 +29,9 @@
         video_uri,visible,create_time,
         update_time,status,content_uuid
     </sql>
+
+    <select id="selectCreatorIdByNoteId" resultType="long">
+        select creator_id from t_note where id = #{noteId} and status = 1
+    </select>
+
 </mapper>

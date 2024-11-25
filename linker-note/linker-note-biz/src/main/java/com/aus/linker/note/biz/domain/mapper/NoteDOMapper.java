@@ -11,6 +11,13 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 */
 public interface NoteDOMapper extends BaseMapper<NoteDO> {
 
+    /**
+     * 查询笔记的发布者 ID
+     * @param noteId
+     * @return
+     */
+    Long selectCreatorIdByNoteId(Long noteId);
+
 }
 
 

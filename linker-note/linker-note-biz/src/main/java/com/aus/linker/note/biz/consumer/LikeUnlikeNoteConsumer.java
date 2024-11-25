@@ -1,11 +1,11 @@
 package com.aus.linker.note.biz.consumer;
 
-import com.alibaba.nacos.shaded.com.google.common.util.concurrent.RateLimiter;
 import com.aus.framework.common.utils.JsonUtil;
 import com.aus.linker.note.biz.constant.MQConstants;
 import com.aus.linker.note.biz.domain.dataobject.NoteLikeDO;
 import com.aus.linker.note.biz.domain.mapper.NoteLikeDOMapper;
 import com.aus.linker.note.biz.model.dto.LikeUnlikeNoteMqDTO;
+import com.google.common.util.concurrent.RateLimiter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.producer.SendCallback;
 import org.apache.rocketmq.client.producer.SendResult;
@@ -30,11 +30,11 @@ import java.util.Objects;
 @Slf4j
 public class LikeUnlikeNoteConsumer implements RocketMQListener<Message> {
 
-    @Resource
     private RateLimiter rateLimiter = RateLimiter.create(3000);
 
     @Resource
     private NoteLikeDOMapper noteLikeDOMapper;
+
     @Autowired
     private RocketMQTemplate rocketMQTemplate;
 

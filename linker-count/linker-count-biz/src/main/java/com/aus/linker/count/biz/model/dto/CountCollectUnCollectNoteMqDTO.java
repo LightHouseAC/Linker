@@ -24,4 +24,6 @@ public class CountCollectUnCollectNoteMqDTO {
 
     private LocalDateTime createTime;
 
+    private Long noteCreatorId;
+
 }

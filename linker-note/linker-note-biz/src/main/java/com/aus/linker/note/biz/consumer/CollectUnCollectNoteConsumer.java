@@ -1,11 +1,11 @@
 package com.aus.linker.note.biz.consumer;
 
-import com.alibaba.nacos.shaded.com.google.common.util.concurrent.RateLimiter;
 import com.aus.framework.common.utils.JsonUtil;
 import com.aus.linker.note.biz.constant.MQConstants;
 import com.aus.linker.note.biz.domain.dataobject.NoteCollectionDO;
 import com.aus.linker.note.biz.domain.mapper.NoteCollectionDOMapper;
 import com.aus.linker.note.biz.model.dto.CollectUnCollectNoteMqDTO;
+import com.google.common.util.concurrent.RateLimiter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.producer.SendCallback;
 import org.apache.rocketmq.client.producer.SendResult;

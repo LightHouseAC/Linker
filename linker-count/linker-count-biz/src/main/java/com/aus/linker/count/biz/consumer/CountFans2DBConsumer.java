@@ -1,10 +1,10 @@
 package com.aus.linker.count.biz.consumer;
 
 import cn.hutool.core.collection.CollUtil;
-import com.alibaba.nacos.shaded.com.google.common.util.concurrent.RateLimiter;
 import com.aus.framework.common.utils.JsonUtil;
 import com.aus.linker.count.biz.constant.MQConstants;
 import com.aus.linker.count.biz.domain.mapper.UserCountDOMapper;
+import com.google.common.util.concurrent.RateLimiter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;

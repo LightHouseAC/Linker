@@ -4,9 +4,10 @@ import com.aus.framework.common.utils.JsonUtil;
 import com.aus.linker.count.biz.constant.MQConstants;
 import com.aus.linker.count.biz.constant.RedisConstants;
 import com.aus.linker.count.biz.enums.CollectUnCollectNoteTypeEnum;
+import com.aus.linker.count.biz.model.dto.AggregationCountCollectUnCollectNoteMqDTO;
 import com.aus.linker.count.biz.model.dto.CountCollectUnCollectNoteMqDTO;
 import com.github.phantomthief.collection.BufferTrigger;
-import com.google.common.collect.Maps;
+import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.producer.SendCallback;
 import org.apache.rocketmq.client.producer.SendResult;
@@ -62,12 +63,17 @@ public class CountNoteCollectConsumer implements RocketMQListener<String> {
                 .collect(Collectors.groupingBy(CountCollectUnCollectNoteMqDTO::getNoteId));
 
         // 按组汇总数据，统计出最终的计数
-        Map<Long, Integer> countMap = Maps.newHashMap();
+        List<AggregationCountCollectUnCollectNoteMqDTO> countList = Lists.newArrayList();
 
         for(Map.Entry<Long, List<CountCollectUnCollectNoteMqDTO>> entry : groupMap.entrySet()) {
+            Long noteId = entry.getKey();
+            Long creatorId = null;
             List<CountCollectUnCollectNoteMqDTO> list = entry.getValue();
             int finalCount = 0;
+
             for (CountCollectUnCollectNoteMqDTO countCollectUnCollectNoteMqDTO : list) {
+                creatorId = countCollectUnCollectNoteMqDTO.getNoteCreatorId();
+
                 Integer type = countCollectUnCollectNoteMqDTO.getType();
 
                 CollectUnCollectNoteTypeEnum collectUnCollectNoteTypeEnum = CollectUnCollectNoteTypeEnum.valueOf(type);
@@ -79,21 +85,37 @@ public class CountNoteCollectConsumer implements RocketMQListener<String> {
                     case UN_COLLECT -> finalCount--;
                 }
             }
-            countMap.put(entry.getKey(), finalCount);
+
+            countList.add(AggregationCountCollectUnCollectNoteMqDTO.builder()
+                    .noteId(noteId)
+                    .creatorId(creatorId)
+                    .count(finalCount)
+                    .build());
         }
 
-        log.info("## 【笔记收藏数】聚合后的计数数据: {}", JsonUtil.toJsonString(countMap));
+        log.info("## 【笔记收藏数】聚合后的计数数据: {}", JsonUtil.toJsonString(countList));
 
-        countMap.forEach((k, v) -> {
-            String redisKey = RedisConstants.buildCountNoteKey(k);
+        countList.forEach(item -> {
+            Long noteId = item.getNoteId();
+            Long creatorId = item.getCreatorId();
+            Integer count = item.getCount();
+
+            String redisKey = RedisConstants.buildCountNoteKey(noteId);
             boolean isExists = Boolean.TRUE.equals(redisTemplate.hasKey(redisKey));
 
             if (isExists) {
-                redisTemplate.opsForHash().increment(redisKey, RedisConstants.FIELD_COLLECT_TOTAL, v);
+                redisTemplate.opsForHash().increment(redisKey, RedisConstants.FIELD_COLLECT_TOTAL, count);
+            }
+
+            // 更新 Redis 用户维度收藏数
+            String countUserRedisKey = RedisConstants.buildCountUserKey(creatorId);
+            boolean isCountUserExists = Boolean.TRUE.equals(redisTemplate.hasKey(countUserRedisKey));
+            if (isCountUserExists) {
+                redisTemplate.opsForHash().increment(countUserRedisKey, RedisConstants.FIELD_COLLECT_TOTAL, count);
             }
         });
 
-        Message<String> message = MessageBuilder.withPayload(JsonUtil.toJsonString(countMap)).build();
+        Message<String> message = MessageBuilder.withPayload(JsonUtil.toJsonString(countList)).build();
 
         rocketMQTemplate.asyncSend(MQConstants.TOPIC_COUNT_NOTE_COLLECT_2_DB, message, new SendCallback() {
             @Override

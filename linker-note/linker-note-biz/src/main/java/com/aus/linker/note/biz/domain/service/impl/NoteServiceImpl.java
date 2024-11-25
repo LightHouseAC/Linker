@@ -99,6 +99,9 @@ public class NoteServiceImpl extends ServiceImpl<NoteDOMapper, NoteDO>
     @Resource
     private NoteCollectionDOMapper noteCollectionDOMapper;
 
+    @Resource
+    private NoteDOMapper noteDOMapper;
+
     /**
      * 笔记发布
      * @param publishNoteReqVO
@@ -608,7 +611,7 @@ public class NoteServiceImpl extends ServiceImpl<NoteDOMapper, NoteDO>
         Long noteId = likeNoteReqVO.getId();
 
         // 1. 校验被点赞的笔记是否存在
-        checkNoteIsExists(noteId);
+        Long creatorId = checkNoteIsExistsAndGetCreatorId(noteId);
 
         // 2. 判断目标笔记，是否已经点赞过
         // 当前登录用户 ID
@@ -625,7 +628,7 @@ public class NoteServiceImpl extends ServiceImpl<NoteDOMapper, NoteDO>
         script.setResultType(Long.class);
 
         // 执行脚本拿到返回值
-        Long result = redisTemplate.execute(script, Collections.singletonList(bloomUserNoteLikeListKey), userId);
+        Long result = redisTemplate.execute(script, Collections.singletonList(bloomUserNoteLikeListKey), noteId);
 
         NoteLikeLuaResultEnum noteLikeLuaResultEnum = NoteLikeLuaResultEnum.valueOf(result);
 
@@ -708,6 +711,7 @@ public class NoteServiceImpl extends ServiceImpl<NoteDOMapper, NoteDO>
                 .noteId(noteId)
                 .type(LikeUnlikeNoteTypeEnum.LIKE.getCode())
                 .createTime(now)
+                .noteCreatorId(creatorId)
                 .build();
 
         // 构建消息对象，将 DTO 转成 Json 字符串设置到消息体中
@@ -737,7 +741,7 @@ public class NoteServiceImpl extends ServiceImpl<NoteDOMapper, NoteDO>
     public Response<?> unlikeNote(UnlikeNoteReqVO unlikeNoteReqVO) {
         Long noteId = unlikeNoteReqVO.getId();
 
-        checkNoteIsExists(noteId);
+        Long creatorId = checkNoteIsExistsAndGetCreatorId(noteId);
 
         Long userId = LoginUserContextHolder.getUserId();
 
@@ -777,6 +781,7 @@ public class NoteServiceImpl extends ServiceImpl<NoteDOMapper, NoteDO>
                 .noteId(noteId)
                 .type(LikeUnlikeNoteTypeEnum.UNLIKE.getCode())
                 .createTime(LocalDateTime.now())
+                .noteCreatorId(creatorId)
                 .build();
 
         Message<String> message = MessageBuilder.withPayload(JsonUtil.toJsonString(likeUnlikeNoteMqDTO)).build();
@@ -803,7 +808,7 @@ public class NoteServiceImpl extends ServiceImpl<NoteDOMapper, NoteDO>
     public Response<?> collectNote(CollectNoteReqVO collectNoteReqVO) {
         Long noteId = collectNoteReqVO.getId();
 
-        checkNoteIsExists(noteId);
+        Long creatorId = checkNoteIsExistsAndGetCreatorId(noteId);
 
         Long userId = LoginUserContextHolder.getUserId();
         String bloomUserNoteCollectListKey = RedisKeyConstants.buildBloomUserNoteCollectListKey(userId);
@@ -886,6 +891,7 @@ public class NoteServiceImpl extends ServiceImpl<NoteDOMapper, NoteDO>
                 .noteId(noteId)
                 .type(CollectUnCollectNoteTypeEnum.COLLECT.getCode())
                 .createTime(now)
+                .noteCreatorId(creatorId)
                 .build();
 
         // 构建消息对象，将 DTO 转成 Json 字符串设置到消息体中
@@ -914,7 +920,7 @@ public class NoteServiceImpl extends ServiceImpl<NoteDOMapper, NoteDO>
     public Response<?> unCollectNote(UnCollectNoteReqVO unCollectNoteReqVO) {
         Long noteId = unCollectNoteReqVO.getId();
 
-        checkNoteIsExists(noteId);
+        Long creatorId = checkNoteIsExistsAndGetCreatorId(noteId);
 
         Long userId = LoginUserContextHolder.getUserId();
 
@@ -951,6 +957,7 @@ public class NoteServiceImpl extends ServiceImpl<NoteDOMapper, NoteDO>
                 .noteId(noteId)
                 .type(CollectUnCollectNoteTypeEnum.UN_COLLECT.getCode())
                 .createTime(LocalDateTime.now())
+                .noteCreatorId(creatorId)
                 .build();
 
         Message<String> message = MessageBuilder.withPayload(JsonUtil.toJsonString(collectUnCollectNoteMqDTO)).build();
@@ -1127,10 +1134,10 @@ public class NoteServiceImpl extends ServiceImpl<NoteDOMapper, NoteDO>
     }
 
     /**
-     * 校验笔记是否存在
+     * 校验笔记是否存在，若存在，则返回笔记的发布者 ID
      * @param noteId
      */
-    private void checkNoteIsExists(Long noteId) {
+    private Long checkNoteIsExistsAndGetCreatorId(Long noteId) {
         // 先从本地缓存校验
         String findNoteDetailRespVOStrLocalCache = LOCAL_CACHE.getIfPresent(noteId);
         // 解析 Json 字符串为 VO 对象
@@ -1148,6 +1155,8 @@ public class NoteServiceImpl extends ServiceImpl<NoteDOMapper, NoteDO>
 
             // 都不存在，查库校验
             if (Objects.isNull(findNoteDetailRespVO)) {
+                Long creatorId = noteDOMapper.selectCreatorIdByNoteId(noteId);
+
                 QueryWrapper<NoteDO> wrapper = new QueryWrapper<>();
                 wrapper.eq("id", noteId);
                 wrapper.eq("status", NoteStatusEnum.NORMAL.getCode());
@@ -1162,8 +1171,10 @@ public class NoteServiceImpl extends ServiceImpl<NoteDOMapper, NoteDO>
                     FindNoteDetailReqVO findNoteDetailReqVO = FindNoteDetailReqVO.builder().id(noteId).build();
                     findNoteDetail(findNoteDetailReqVO); // 查询笔记（自动写入缓存）
                 });
+                return creatorId;
             }
         }
+        return findNoteDetailRespVO.getCreatorId();
     }
 
     /**
