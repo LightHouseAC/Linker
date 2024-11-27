@@ -1,7 +1,7 @@
 package com.aus.linker.data.align.consumer;
 
 import com.aus.framework.common.utils.JsonUtil;
-import com.aus.linker.data.align.constant.MQConstant;
+import com.aus.linker.data.align.constant.MQConstants;
 import com.aus.linker.data.align.constant.RedisKeyConstants;
 import com.aus.linker.data.align.constant.TableConstants;
 import com.aus.linker.data.align.domain.mapper.InsertRecordMapper;
@@ -25,8 +25,8 @@ import java.util.Collections;
 import java.util.Objects;
 
 @Component
-@RocketMQMessageListener(consumerGroup = "linker_group_data_align_" + MQConstant.TOPIC_COUNT_NOTE_LIKE,
-    topic = MQConstant.TOPIC_COUNT_NOTE_LIKE
+@RocketMQMessageListener(consumerGroup = "linker_group_data_align_" + MQConstants.TOPIC_COUNT_NOTE_LIKE,
+    topic = MQConstants.TOPIC_COUNT_NOTE_LIKE
 )
 @Slf4j
 public class TodayNoteLikeIncrementData2DBConsumer implements RocketMQListener<String> {
