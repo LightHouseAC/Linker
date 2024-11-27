@@ -7,7 +7,7 @@ public class TableConstants {
      */
     private static final String TABLE_NAME_SEPARATOR = "_";
 
-    public static String buildTableNameSuffix(String date, int hashKey) {
+    public static String buildTableNameSuffix(String date, long hashKey) {
         // 拼接完整的表名
         return date + TABLE_NAME_SEPARATOR + hashKey;
     }
