@@ -1,6 +1,8 @@
 package com.aus.linker.search.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import com.aus.framework.common.response.PageResponse;
+import com.aus.framework.common.utils.NumberUtils;
 import com.aus.linker.search.index.UserIndex;
 import com.aus.linker.search.model.vo.SearchUserReqVO;
 import com.aus.linker.search.model.vo.SearchUserRespVO;
@@ -15,6 +17,7 @@ import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
 import org.elasticsearch.search.sort.FieldSortBuilder;
 import org.elasticsearch.search.sort.SortBuilder;
 import org.elasticsearch.search.sort.SortOrder;
@@ -23,6 +26,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @Service
 @Slf4j
@@ -63,6 +67,13 @@ public class UserServiceImpl implements UserService {
         sourceBuilder.from(from);
         sourceBuilder.size(pageSize);
 
+        // 设置高亮字段
+        HighlightBuilder highlightBuilder = new HighlightBuilder();
+        highlightBuilder.field(UserIndex.FIELD_USER_NICKNAME)
+                .preTags("<strong>")
+                .postTags("</strong>");
+        sourceBuilder.highlighter(highlightBuilder);
+
         // 将构建的查询条件设置到 request 中
         searchRequest.source(sourceBuilder);
 
@@ -98,6 +109,15 @@ public class UserServiceImpl implements UserService {
                 Integer noteTotal = (Integer) sourceAsMap.get(UserIndex.FIELD_USER_NOTE_TOTAL);
                 Integer fansTotal = (Integer) sourceAsMap.get(UserIndex.FIELD_USER_FANS_TOTAL);
 
+                // 获取高亮字段
+                String highlightedNickName = null;
+                if (CollUtil.isNotEmpty(hit.getHighlightFields())
+                        && hit.getHighlightFields().containsKey(UserIndex.FIELD_USER_NICKNAME)) {
+                    highlightedNickName = hit.getHighlightFields().get(UserIndex.FIELD_USER_NICKNAME).fragments()[0].string();
+                }
+
+                String formattedFansTotal = Objects.nonNull(fansTotal) ? NumberUtils.formatNumberString(fansTotal) : "0";
+
                 // 构建 VO 实体类
                 SearchUserRespVO searchUserRespVO = SearchUserRespVO.builder()
                         .userId(userId)
@@ -105,7 +125,8 @@ public class UserServiceImpl implements UserService {
                         .avatar(avatar)
                         .linkerId(linkerId)
                         .noteTotal(noteTotal)
-                        .fansTotal(fansTotal)
+                        .fansTotal(formattedFansTotal)
+                        .highlightNickname(highlightedNickName)
                         .build();
                 searchUserRespVOS.add(searchUserRespVO);
             }
