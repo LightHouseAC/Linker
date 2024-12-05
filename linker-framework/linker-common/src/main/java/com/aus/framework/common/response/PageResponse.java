@@ -22,7 +22,7 @@ public class PageResponse<T> extends Response<List<T>> {
         long pageSize = 10L;
         pageResponse.setPageSize(pageSize);
         // 计算总页数
-        long totalPage = getTotalPage(pageNo, pageSize);
+        long totalPage = getTotalPage(totalCount, pageSize);
         pageResponse.setTotalPage(totalPage);
         return pageResponse;
     }
